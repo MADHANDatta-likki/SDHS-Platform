@@ -6,7 +6,8 @@ function AdminImageUpload() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [imageUrl, setImageUrl] = useState('');
-  const [uploadedBy, setUploadedBy] = useState('PTP4077');
+  const uploadedBy =
+  localStorage.getItem('volunteerId') || 'SYSTEM';
 
   const [serviceSections, setServiceSections] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
