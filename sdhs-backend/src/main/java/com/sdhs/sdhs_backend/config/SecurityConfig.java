@@ -34,7 +34,16 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOrigins(List.of("http://localhost:5174", "https://sdhs-platform-frontend.onrender.com", "https://sdhs-platform-1.onrender.com", "http://localhost:5175"));
+        config.setAllowedOrigins(List.of(
+                "http://localhost:5173",
+                "http://localhost:5174",
+                "http://localhost:5175",
+                "https://sdhs-platform-frontend.onrender.com",
+                "https://sdhs-platform-1.onrender.com",
+                "https://sdhs-platform-5tf2.onrender.com",
+                "https://sdhs.in",
+                "https://www.sdhs.in"
+        ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
 

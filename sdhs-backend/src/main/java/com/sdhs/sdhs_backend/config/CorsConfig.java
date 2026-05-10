@@ -14,7 +14,16 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/api/**")
-                        .allowedOrigins("http://localhost:5173")
+                        .allowedOrigins(
+                                "http://localhost:5173",
+                                "http://localhost:5174",
+                                "http://localhost:5175",
+                                "https://sdhs-platform-frontend.onrender.com",
+                                "https://sdhs-platform-1.onrender.com",
+                                "https://sdhs-platform-5tf2.onrender.com",
+                                "https://sdhs.in",
+                                "https://www.sdhs.in"
+                        )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*");
             }
