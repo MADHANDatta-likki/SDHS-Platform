@@ -10,4 +10,6 @@ public interface EventRegistrationRepository extends JpaRepository<EventRegistra
 
     Optional<EventRegistration> findByEventIdAndPrimaryVolunteerId(Long eventId, String primaryVolunteerId);
     List<EventRegistration> findByPrimaryVolunteerId(String volunteerId);
+
+    List<EventRegistration> findByOverallStatus(String overallStatus);
 }

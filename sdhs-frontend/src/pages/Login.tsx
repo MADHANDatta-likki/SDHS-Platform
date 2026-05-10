@@ -62,11 +62,11 @@ function Login() {
                 </div>
 
                 <div className="mb-4">
-                  <label className="form-label fw-semibold">Phone Number</label>
+                  <label className="form-label fw-semibold">Password</label>
                   <input
                     type="password"
                     className="form-control form-control-lg"
-                    placeholder="Enter registered phone number"
+                    placeholder="Enter password"
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
                     required

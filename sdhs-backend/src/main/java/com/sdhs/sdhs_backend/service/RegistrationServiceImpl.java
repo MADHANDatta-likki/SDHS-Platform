@@ -57,7 +57,7 @@ public class RegistrationServiceImpl implements RegistrationService {
 
         reg = registrationRepo.save(reg);
 
-        RegistrationPayment payment = new RegistrationPayment();
+        /*RegistrationPayment payment = new RegistrationPayment();
         payment.setRegistrationId(reg.getRegistrationId());
         payment.setAmount(request.getPayment().getAmount());
         payment.setUtrNumber(request.getPayment().getUtrNumber());
@@ -65,7 +65,7 @@ public class RegistrationServiceImpl implements RegistrationService {
         payment.setPaymentStatus("PENDING_REVIEW");
         payment.setCreatedAt(LocalDateTime.now());
 
-        payment = paymentRepo.save(payment);
+        payment = paymentRepo.save(payment);*/
 
         for (CampRegistrationRequest.ParticipantDTO p : request.getParticipants()) {
 
@@ -78,7 +78,7 @@ public class RegistrationServiceImpl implements RegistrationService {
             rp.setRelationshipToPrimary(p.getRelationship());
             rp.setParticipantType(p.getType());
             rp.setParticipantStatus("PENDING_REVIEW");
-            rp.setPaymentId(payment.getPaymentId());
+            rp.setPaymentId(null);
             rp.setCreatedAt(LocalDateTime.now());
 
             participantRepo.save(rp);
@@ -119,16 +119,6 @@ payments.isEmpty() ? "NA" : payments.get(payments.size() - 1).getPaymentStatus()
         EventRegistration registration = registrationRepo.findById(registrationId)
                 .orElseThrow(() -> new RuntimeException("Registration not found"));
 
-        RegistrationPayment payment = new RegistrationPayment();
-        payment.setRegistrationId(registrationId);
-        payment.setAmount(request.getPayment().getAmount());
-        payment.setUtrNumber(request.getPayment().getUtrNumber());
-        payment.setTransactionDate(request.getPayment().getTransactionDate());
-        payment.setPaymentStatus("PENDING_REVIEW");
-        payment.setCreatedAt(LocalDateTime.now());
-
-        payment = paymentRepo.save(payment);
-
         for (AddParticipantsRequest.ParticipantDTO p : request.getParticipants()) {
 
             participantRepo.findByEventIdAndVolunteerId(registration.getEventId(), p.getVolunteerId())
@@ -145,7 +135,7 @@ payments.isEmpty() ? "NA" : payments.get(payments.size() - 1).getPaymentStatus()
             rp.setRelationshipToPrimary(p.getRelationship());
             rp.setParticipantType("ACCOMPANYING");
             rp.setParticipantStatus("PENDING_REVIEW");
-            rp.setPaymentId(payment.getPaymentId());
+            rp.setPaymentId(null);
             rp.setCreatedAt(LocalDateTime.now());
 
             participantRepo.save(rp);
@@ -190,12 +180,13 @@ public RegistrationDetailsResponse getRegistrationDetails(Long registrationId) {
     for (RegistrationPayment pay : payments) {
         paymentDTOs.add(
                 new RegistrationDetailsResponse.PaymentDetails(
-                        pay.getPaymentId(),
-                        pay.getAmount(),
-                        pay.getUtrNumber(),
-                        pay.getTransactionDate(),
-                        pay.getPaymentStatus()
-                )
+        pay.getPaymentId(),
+        pay.getAmount(),
+        pay.getUtrNumber(),
+        pay.getTransactionDate(),
+        pay.getPaymentStatus(),
+        pay.getVerifiedAt()
+)
         );
     }
 

@@ -13,4 +13,5 @@ public interface VolunteerRepository extends JpaRepository<Volunteer, String> {
             String phone,
             String isActive
     );
+    Optional<Volunteer> findByVid(String vid);
 }

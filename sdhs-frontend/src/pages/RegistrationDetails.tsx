@@ -83,7 +83,7 @@ function RegistrationDetails() {
                 <th>Payment ID</th>
                 <th>Amount</th>
                 <th>UTR</th>
-                <th>Date</th>
+                <th>Verified At</th>
                 <th>Status</th>
               </tr>
             </thead>
@@ -93,7 +93,11 @@ function RegistrationDetails() {
                   <td>{p.paymentId}</td>
                   <td>₹{p.amount}</td>
                   <td>{p.utrNumber}</td>
-                  <td>{p.transactionDate}</td>
+                  <td>
+  {p.verifiedAt
+    ? new Date(p.verifiedAt).toLocaleString()
+    : '-'}
+</td>
                   <td>{p.paymentStatus}</td>
                 </tr>
               ))}

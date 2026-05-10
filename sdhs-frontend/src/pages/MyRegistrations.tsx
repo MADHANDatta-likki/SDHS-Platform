@@ -70,6 +70,7 @@ function MyRegistrations() {
                     <p className="text-muted mb-1">
                       Payment Status: <strong>{reg.paymentStatus}</strong>
                     </p>
+                    
 
                     <p className="mb-3">
                       Registration Status: <strong>{reg.status}</strong>
@@ -89,6 +90,16 @@ function MyRegistrations() {
 >
   Add Volunteers
 </button>
+                    {reg.status === 'APPROVED_FOR_PAYMENT' && (
+                      <button
+                        className="btn btn-success mt-2 w-100"
+                        onClick={() =>
+                          (window.location.href = `/volunteer/payment/${reg.registrationId}`)
+                        }
+                      >
+                        Pay Now
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}

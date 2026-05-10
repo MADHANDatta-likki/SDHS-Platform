@@ -5,6 +5,7 @@ import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -41,5 +42,6 @@ public class RegistrationDetailsResponse {
         private String utrNumber;
         private LocalDate transactionDate;
         private String paymentStatus;
+        private LocalDateTime verifiedAt;
     }
 }

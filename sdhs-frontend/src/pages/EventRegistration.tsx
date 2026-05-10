@@ -16,20 +16,19 @@ function EventRegistration() {
   const [events, setEvents] = useState<EventItem[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<EventItem | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
+  const [formError, setFormError] = useState('');
   const [registeredEvents, setRegisteredEvents] = useState<number[]>([]);
 
   const volunteer = JSON.parse(localStorage.getItem('volunteer') || '{}');
 
-  const [primary, setPrimary] = useState({
-    firstName: '',
-    lastName: '',
+  const [primary] = useState({
+    firstName: volunteer?.name || volunteer?.displayName || '',
+    lastName: volunteer?.surname || '',
     age: '',
-    mobile: '',
+    mobile: volunteer?.phone || volunteer?.whatsappnumber || '',
   });
 
   const [teamLeaderCode, setTeamLeaderCode] = useState('');
-  const [utrNumber, setUtrNumber] = useState('');
-  const [transactionDate, setTransactionDate] = useState('');
 
   const [accompanying, setAccompanying] = useState<any[]>([]);
 
@@ -71,6 +70,7 @@ function EventRegistration() {
         name: '',
         age: '',
         relationship: '',
+        lookupMessage: '',
       },
     ]);
   };
@@ -79,52 +79,145 @@ function EventRegistration() {
     setAccompanying(accompanying.filter((_, index) => index !== indexToRemove));
   };
 
+  const getErrorMessage = (error: any) => {
+    if (typeof error?.response?.data === 'string') {
+      return error.response.data;
+    }
+
+    if (error?.response?.data?.message) {
+      return error.response.data.message;
+    }
+
+    if (error?.response?.data?.error) {
+      return error.response.data.error;
+    }
+
+    if (error?.message) {
+      return error.message;
+    }
+
+    return 'Something went wrong. Please try again.';
+  };
+
+  const updateAccompanyingVolunteer = (index: number, field: string, value: string) => {
+    const updated = [...accompanying];
+    updated[index][field] = value;
+    setAccompanying(updated);
+  };
+
+  const lookupAccompanyingVolunteer = async (index: number) => {
+    const current = accompanying[index];
+    const volunteerId = current?.volunteerId?.trim().toUpperCase();
+
+    if (!volunteerId) return;
+
+    try {
+      const updated = [...accompanying];
+      updated[index].volunteerId = volunteerId;
+      updated[index].lookupMessage = 'Checking volunteer details...';
+      setAccompanying(updated);
+
+      const registrationResponse = await api.get(`/registrations/my?volunteerId=${volunteerId}`);
+      const alreadyRegistered = Array.isArray(registrationResponse.data)
+        && selectedEvent
+        && registrationResponse.data.some((registration: any) => registration.eventId === selectedEvent.eventId);
+
+      if (alreadyRegistered) {
+        const latest = [...accompanying];
+        latest[index].lookupMessage = 'This volunteer is already registered for this event.';
+        setAccompanying(latest);
+        return;
+      }
+
+      const volunteerResponse = await api.get(`/volunteers/${volunteerId}`);
+      const volunteerDetails = volunteerResponse.data;
+
+      const latest = [...accompanying];
+      latest[index].name = volunteerDetails.displayName || volunteerDetails.name || '';
+      latest[index].lookupMessage = 'Volunteer details loaded.';
+      setAccompanying(latest);
+    } catch (error: any) {
+      console.error('Volunteer lookup error:', error);
+
+      const latest = [...accompanying];
+      latest[index].lookupMessage = getErrorMessage(error);
+      setAccompanying(latest);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!selectedEvent) return;
+
+    setFormError('');
+
+    if (!teamLeaderCode.trim()) {
+      setFormError('Team Leader Code is required.');
+      return;
+    }
+
+    const accompanyingIds = accompanying
+      .map((v) => v.volunteerId?.trim().toUpperCase())
+      .filter(Boolean);
+
+    if (accompanyingIds.includes(volunteer?.vid?.toUpperCase())) {
+      setFormError('Primary volunteer cannot be added again as an accompanying volunteer.');
+      return;
+    }
+
+    if (new Set(accompanyingIds).size !== accompanyingIds.length) {
+      setFormError('Duplicate accompanying volunteer IDs found.');
+      return;
+    }
+
+    for (const v of accompanying) {
+      if (!v.volunteerId?.trim() || !v.name?.trim() || !v.age || !v.relationship?.trim()) {
+        setFormError('Please complete all accompanying volunteer details before submitting.');
+        return;
+      }
+
+      if (v.lookupMessage === 'This volunteer is already registered for this event.') {
+        setFormError(`Volunteer ${v.volunteerId} is already registered for this event.`);
+        return;
+      }
+    }
 
     try {
       const participants = [
         {
           volunteerId: volunteer.vid,
-          fullName: `${primary.firstName} ${primary.lastName}`,
+          fullName:
+            volunteer?.displayName ||
+            `${primary.firstName} ${primary.lastName}`,
           age: Number(primary.age),
           relationship: 'SELF',
           type: 'PRIMARY',
         },
         ...accompanying.map((v) => ({
-          volunteerId: v.volunteerId,
-          fullName: v.name,
+          volunteerId: v.volunteerId.trim().toUpperCase(),
+          fullName: v.name.trim(),
           age: Number(v.age),
-          relationship: v.relationship,
+          relationship: v.relationship.trim(),
           type: 'ACCOMPANYING',
         })),
       ];
 
       const payload = {
         eventId: selectedEvent.eventId,
-        teamLeaderCode,
-        participants,
-        payment: {
-          amount: (1 + accompanying.length) * (selectedEvent.feePerPerson || 0),
-          utrNumber,
-          transactionDate,
-        },
+        teamLeaderCode: teamLeaderCode,
+        participants: participants,
       };
 
       await api.post('/registrations/camp', payload);
 
-      alert('Registration submitted successfully');
+      alert(
+        'Your registration has been submitted successfully and is pending organizer review. You will be notified once it is approved. For urgent questions, please contact the volunteer office or your team leader.'
+      );
       window.location.href = '/volunteer/dashboard';
     } catch (error: any) {
-  console.error('Submit error:', error);
-  console.error('Backend response:', error.response);
-
-  alert(
-    error.response?.data ||
-    error.message ||
-    'Error submitting registration'
-  );
-}
+      console.error('Submit error:', error);
+      console.error('Backend response:', error.response);
+      setFormError(getErrorMessage(error));
+    }
   };
 
   return (
@@ -189,74 +282,68 @@ function EventRegistration() {
 
             <div className="sdhs-form">
               <div className="row g-3">
+                {formError && (
+                  <div className="col-12">
+                    <div className="alert alert-danger">{formError}</div>
+                  </div>
+                )}
                 <h5 className="mt-3">Personal Details</h5>
-
-                <div className="col-md-6">
-                  <label className="form-label">First Name</label>
-                  <input
-                    className="form-control"
-                    value={primary.firstName}
-                    onChange={(e) => setPrimary({ ...primary, firstName: e.target.value })}
-                  />
-                </div>
-
-                <div className="col-md-6">
-                  <label className="form-label">Last Name</label>
-                  <input
-                    className="form-control"
-                    value={primary.lastName}
-                    onChange={(e) => setPrimary({ ...primary, lastName: e.target.value })}
-                  />
-                </div>
-
-                <div className="col-md-4">
-                  <label className="form-label">Age</label>
-                  <input
-                    className="form-control"
-                    type="number"
-                    value={primary.age}
-                    onChange={(e) => setPrimary({ ...primary, age: e.target.value })}
-                  />
-                </div>
-
-                <div className="col-md-4">
-                  <label className="form-label">Gender</label>
-                  <select className="form-select">
-                    <option>Male</option>
-                    <option>Female</option>
-                  </select>
-                </div>
-
-                <div className="col-md-4">
-                  <label className="form-label">Blood Group</label>
-                  <select className="form-select">
-                    <option>A+</option>
-                    <option>B+</option>
-                    <option>O+</option>
-                    <option>AB+</option>
-                  </select>
-                </div>
-
                 <div className="col-12">
-                  <label className="form-label">Present Address</label>
-                  <textarea className="form-control"></textarea>
+                  <div className="alert alert-info">
+                    Your volunteer details are auto-loaded from SDHS records.
+                    <br />
+                    If your information is incorrect, please contact the volunteer office or update request team.
+                  </div>
                 </div>
 
-                <h5 className="mt-4">Contact Information</h5>
+                <div className="col-md-6">
+                  <label className="form-label">Volunteer ID</label>
+                  <input className="form-control" value={volunteer?.vid || ''} readOnly />
+                </div>
 
                 <div className="col-md-6">
+                  <label className="form-label">Volunteer Name</label>
+                  <input
+                    className="form-control"
+                    value={volunteer?.displayName || ''}
+                    readOnly
+                  />
+                </div>
+
+                <div className="col-md-4">
+                  <label className="form-label">Centre</label>
+                  <input
+                    className="form-control"
+                    value={volunteer?.vCentreID || volunteer?.vcentreid || ''}
+                    readOnly
+                  />
+                </div>
+
+                <div className="col-md-4">
                   <label className="form-label">Mobile Number</label>
                   <input
                     className="form-control"
                     value={primary.mobile}
-                    onChange={(e) => setPrimary({ ...primary, mobile: e.target.value })}
+                    readOnly
                   />
                 </div>
 
-                <div className="col-md-6">
-                  <label className="form-label">Whatsapp Number</label>
-                  <input className="form-control" />
+                <div className="col-md-4">
+                  <label className="form-label">Email</label>
+                  <input
+                    className="form-control"
+                    value={volunteer?.email || ''}
+                    readOnly
+                  />
                 </div>
+
+                {/* Present Address removed */}
+
+                {/* Contact Information heading removed */}
+
+                {/* Editable Mobile Number block removed */}
+
+                {/* Whatsapp Number block removed */}
 
                 <h5 className="mt-4">Team Leader</h5>
 
@@ -285,11 +372,8 @@ function EventRegistration() {
                             className="form-control"
                             placeholder="VID"
                             value={vol.volunteerId}
-                            onChange={(e) => {
-                              const updated = [...accompanying];
-                              updated[index].volunteerId = e.target.value;
-                              setAccompanying(updated);
-                            }}
+                            onChange={(e) => updateAccompanyingVolunteer(index, 'volunteerId', e.target.value)}
+                            onBlur={() => lookupAccompanyingVolunteer(index)}
                           />
                         </div>
 
@@ -299,11 +383,8 @@ function EventRegistration() {
                             className="form-control"
                             placeholder="Full Name"
                             value={vol.name}
-                            onChange={(e) => {
-                              const updated = [...accompanying];
-                              updated[index].name = e.target.value;
-                              setAccompanying(updated);
-                            }}
+                            readOnly
+                            onChange={(e) => updateAccompanyingVolunteer(index, 'name', e.target.value)}
                           />
                         </div>
 
@@ -314,11 +395,7 @@ function EventRegistration() {
                             placeholder="Age"
                             type="number"
                             value={vol.age}
-                            onChange={(e) => {
-                              const updated = [...accompanying];
-                              updated[index].age = e.target.value;
-                              setAccompanying(updated);
-                            }}
+                            onChange={(e) => updateAccompanyingVolunteer(index, 'age', e.target.value)}
                           />
                         </div>
 
@@ -328,11 +405,7 @@ function EventRegistration() {
                             className="form-control"
                             placeholder="Relationship"
                             value={vol.relationship}
-                            onChange={(e) => {
-                              const updated = [...accompanying];
-                              updated[index].relationship = e.target.value;
-                              setAccompanying(updated);
-                            }}
+                            onChange={(e) => updateAccompanyingVolunteer(index, 'relationship', e.target.value)}
                           />
                         </div>
 
@@ -346,44 +419,16 @@ function EventRegistration() {
                           </button>
                         </div>
                       </div>
+                      {vol.lookupMessage && (
+                        <small className={vol.lookupMessage.includes('already registered') ? 'text-danger' : 'text-muted'}>
+                          {vol.lookupMessage}
+                        </small>
+                      )}
                     </div>
                   ))}
                 </div>
 
-                <h5 className="mt-4">Payment Details</h5>
-
-                <div className="col-md-3">
-                  <label className="form-label">Participants</label>
-                  <input className="form-control" value={1 + accompanying.length} readOnly />
-                </div>
-
-                <div className="col-md-3">
-                  <label className="form-label">Amount</label>
-                  <input
-                    className="form-control"
-                    value={`₹${(1 + accompanying.length) * (selectedEvent.feePerPerson || 0)}`}
-                    readOnly
-                  />
-                </div>
-
-                <div className="col-md-3">
-                  <label className="form-label">UTR Number</label>
-                  <input
-                    className="form-control"
-                    value={utrNumber}
-                    onChange={(e) => setUtrNumber(e.target.value)}
-                  />
-                </div>
-
-                <div className="col-md-3">
-                  <label className="form-label">Transaction Date</label>
-                  <input
-                    type="date"
-                    className="form-control"
-                    value={transactionDate}
-                    onChange={(e) => setTransactionDate(e.target.value)}
-                  />
-                </div>
+                {/* Payment Details section removed */}
 
                 <div className="col-12 mt-3">
                   <div className="form-check">

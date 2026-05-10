@@ -1,25 +1,58 @@
-const heroSlides = [
+import { useEffect, useState } from 'react';
+import api from '../services/api';
+
+type HeroSlide = {
+  image: string;
+  label: string;
+  title: string;
+  text: string;
+};
+
+type SiteImage = {
+  imageId: number;
+  title?: string;
+  description?: string;
+  imageUrl: string;
+};
+
+const fallbackSlides: HeroSlide[] = [
   {
-    image: '/assets/img/activities/image1.jpg',
+    image: '',
     label: 'Social Service',
     title: 'Serving Humanity with Compassion',
     text: 'Join SDHS volunteers in community service programs that support people in need.',
   },
-  {
-    image: '/assets/img/activities/image2.jpg',
-    label: 'Spiritual Service',
-    title: 'Service is our Religion',
-    text: 'Dedicated volunteers supporting spiritual events, seva programs, and community gatherings.',
-  },
-  {
-    image: '/assets/img/activities/image3.jpg',
-    label: 'Charitable Service',
-    title: 'Together We Can Help More',
-    text: 'Supporting charitable activities with love, discipline, devotion, and dedication.',
-  },
 ];
 
 function Hero() {
+  const [heroSlides, setHeroSlides] = useState<HeroSlide[]>(fallbackSlides);
+
+  useEffect(() => {
+    loadHeroImages();
+  }, []);
+
+  const loadHeroImages = async () => {
+    try {
+      const response = await api.get('/images/placement/HOME_HERO');
+
+      if (Array.isArray(response.data) && response.data.length > 0) {
+        const slides = response.data.map((image: SiteImage, index: number) => ({
+          image: image.imageUrl,
+          label: index === 0 ? 'Social Service' : 'SDHS Service',
+          title: image.title || 'Serving Humanity with Compassion',
+          text:
+            image.description ||
+            'Join SDHS volunteers in community service programs that support people in need.',
+        }));
+
+        setHeroSlides(slides);
+      }
+    } catch (error) {
+      console.error('Error loading hero images:', error);
+      setHeroSlides(fallbackSlides);
+    }
+  };
+
   return (
     <section id="home" className="sdhs-hero-carousel">
       <div
@@ -44,10 +77,14 @@ function Hero() {
 
         <div className="carousel-inner">
           {heroSlides.map((slide, index) => (
-            <div className={`carousel-item ${index === 0 ? 'active' : ''}`} key={slide.title}>
+            <div className={`carousel-item ${index === 0 ? 'active' : ''}`} key={`${slide.title}-${index}`}>
               <div
                 className="sdhs-hero-slide"
-                style={{ backgroundImage: `url(${slide.image})` }}
+                style={
+                  slide.image
+                    ? { backgroundImage: `url(${slide.image})` }
+                    : undefined
+                }
               >
                 <div className="sdhs-hero-overlay"></div>
 
@@ -69,31 +106,34 @@ function Hero() {
                     </div>
                   </div>
                 </div>
-
               </div>
             </div>
           ))}
         </div>
 
-        <button
-          className="carousel-control-prev"
-          type="button"
-          data-bs-target="#sdhsHeroCarousel"
-          data-bs-slide="prev"
-        >
-          <span className="carousel-control-prev-icon" aria-hidden="true"></span>
-          <span className="visually-hidden">Previous</span>
-        </button>
+        {heroSlides.length > 1 && (
+          <>
+            <button
+              className="carousel-control-prev"
+              type="button"
+              data-bs-target="#sdhsHeroCarousel"
+              data-bs-slide="prev"
+            >
+              <span className="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span className="visually-hidden">Previous</span>
+            </button>
 
-        <button
-          className="carousel-control-next"
-          type="button"
-          data-bs-target="#sdhsHeroCarousel"
-          data-bs-slide="next"
-        >
-          <span className="carousel-control-next-icon" aria-hidden="true"></span>
-          <span className="visually-hidden">Next</span>
-        </button>
+            <button
+              className="carousel-control-next"
+              type="button"
+              data-bs-target="#sdhsHeroCarousel"
+              data-bs-slide="next"
+            >
+              <span className="carousel-control-next-icon" aria-hidden="true"></span>
+              <span className="visually-hidden">Next</span>
+            </button>
+          </>
+        )}
       </div>
     </section>
   );

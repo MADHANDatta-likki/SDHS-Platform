@@ -12,4 +12,7 @@ public interface RegistrationParticipantRepository extends JpaRepository<Registr
 
     List<RegistrationParticipant> findByRegistrationId(Long registrationId);
     int countByRegistrationId(Long registrationId);
+
+    List<RegistrationParticipant> findByParticipantStatus(String participantStatus);
+
 }

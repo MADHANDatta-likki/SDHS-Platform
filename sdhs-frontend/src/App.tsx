@@ -10,6 +10,11 @@ import EventRegistration from './pages/EventRegistration';
 import MyRegistrations from './pages/MyRegistrations';
 import AddVolunteers from './pages/AddVolunteers';
 import RegistrationDetails from './pages/RegistrationDetails';
+import AdminImageUpload from './pages/AdminImageUpload';
+import VolunteerPaymentPage from './pages/VolunteerPaymentPage';
+import AdminPaymentVerification from './pages/AdminPaymentVerification';
+import AdminRegistrationApproval from './pages/AdminRegistrationApproval';
+import AdminParticipantApproval from './pages/AdminParticipantApproval';
 
 function App() {
   useEffect(() => {
@@ -30,6 +35,11 @@ function App() {
         <Route path="/volunteer/registrations" element={<MyRegistrations />} />
         <Route path="/volunteer/add-volunteers/:registrationId" element={<AddVolunteers />} />
         <Route path="/volunteer/registration/:registrationId" element={<RegistrationDetails />} />
+        <Route path="/admin/images" element={<AdminImageUpload />} />
+        <Route path="/volunteer/payment/:registrationId" element={<VolunteerPaymentPage />}/>
+        <Route path="/admin/payment-verification" element={<AdminPaymentVerification />}/>
+        <Route path="/admin/registration-approval" element={<AdminRegistrationApproval />}/>
+        <Route path="/admin/participant-approval" element={<AdminParticipantApproval />}/>
       </Routes>
     </BrowserRouter>
   );
