@@ -33,11 +33,13 @@ public class VolunteerPaymentServiceImpl implements VolunteerPaymentService {
 
     @Override
     public Map<String, Object> getPaymentDetails(Long registrationId) {
-
         RegistrationPayment payment =
-                paymentRepository.findByRegistrationId(registrationId)
+                paymentRepository.findFirstByRegistrationIdAndPaymentStatusOrderByPaymentIdDesc(
+                                registrationId,
+                                "PENDING_PAYMENT"
+                        )
                         .orElseThrow(() ->
-                                new RuntimeException("Payment details not found")
+                                new RuntimeException("No pending payment found for this registration")
                         );
 
         EventRegistration registration =
@@ -47,7 +49,17 @@ public class VolunteerPaymentServiceImpl implements VolunteerPaymentService {
                         );
 
         List<RegistrationParticipant> participants =
-                participantRepository.findByRegistrationId(registrationId);
+                participantRepository.findByRegistrationId(registrationId)
+                        .stream()
+                        .filter(participant ->
+                                participant.getPaymentId() != null
+                                        && participant.getPaymentId().equals(payment.getPaymentId())
+                        )
+                        .toList();
+
+        if (participants.isEmpty()) {
+            participants = participantRepository.findByRegistrationId(registrationId);
+        }
 
         Map<String, Object> response = new HashMap<>();
 
@@ -76,9 +88,12 @@ public class VolunteerPaymentServiceImpl implements VolunteerPaymentService {
     ) {
 
         RegistrationPayment payment =
-                paymentRepository.findByRegistrationId(registrationId)
+                paymentRepository.findFirstByRegistrationIdAndPaymentStatusOrderByPaymentIdDesc(
+                                registrationId,
+                                "PENDING_PAYMENT"
+                        )
                         .orElseThrow(() ->
-                                new RuntimeException("Payment record not found")
+                                new RuntimeException("No pending payment found for this registration")
                         );
 
         payment.setUtrNumber(request.getUtrNumber());
@@ -100,5 +115,19 @@ public class VolunteerPaymentServiceImpl implements VolunteerPaymentService {
         registration.setUpdatedAt(LocalDateTime.now());
 
         registrationRepository.save(registration);
+
+        List<RegistrationParticipant> participants =
+                participantRepository.findByRegistrationId(registrationId)
+                        .stream()
+                        .filter(participant ->
+                                participant.getPaymentId() != null
+                                        && participant.getPaymentId().equals(payment.getPaymentId())
+                        )
+                        .toList();
+
+        for (RegistrationParticipant participant : participants) {
+            participant.setParticipantStatus("PAYMENT_SUBMITTED");
+            participantRepository.save(participant);
+        }
     }
 }

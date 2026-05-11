@@ -7,7 +7,10 @@ import java.util.Optional;
 
 public interface RegistrationPaymentRepository extends JpaRepository<RegistrationPayment, Long> {
     List<RegistrationPayment> findAllByRegistrationId(Long registrationId);
-    Optional<RegistrationPayment> findByRegistrationId(Long registrationId);
+    Optional<RegistrationPayment> findFirstByRegistrationIdAndPaymentStatusOrderByPaymentIdDesc(
+        Long registrationId,
+        String paymentStatus
+);
 
     List<RegistrationPayment> findByPaymentStatus(String paymentStatus);
 }

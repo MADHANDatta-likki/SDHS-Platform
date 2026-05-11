@@ -39,7 +39,10 @@ public class AdminParticipantServiceImpl implements AdminParticipantService {
     public List<Map<String, Object>> getPendingParticipants() {
 
         List<RegistrationParticipant> participants =
-                participantRepository.findByParticipantStatus("PENDING_REVIEW");
+                participantRepository.findByParticipantStatusAndAddedLater(
+                        "PENDING_REVIEW",
+                        true
+                );
 
         List<Map<String, Object>> response = new ArrayList<>();
 
@@ -113,6 +116,14 @@ public class AdminParticipantServiceImpl implements AdminParticipantService {
                 throw new RuntimeException("Participant does not belong to this registration");
             }
 
+            if (!Boolean.TRUE.equals(participant.getAddedLater())) {
+                throw new RuntimeException("Only later-added participants can be approved from this flow");
+            }
+
+            if (!"PENDING_REVIEW".equals(participant.getParticipantStatus())) {
+                throw new RuntimeException("Participant " + participant.getParticipantId() + " is not pending review");
+            }
+
             participant.setParticipantStatus("APPROVED_FOR_PAYMENT");
             participant.setPaymentId(payment.getPaymentId());
 
@@ -131,6 +142,15 @@ public class AdminParticipantServiceImpl implements AdminParticipantService {
                 participantRepository.findAllById(request.getParticipantIds());
 
         for (RegistrationParticipant participant : selectedParticipants) {
+
+            if (!Boolean.TRUE.equals(participant.getAddedLater())) {
+                throw new RuntimeException("Only later-added participants can be rejected from this flow");
+            }
+
+            if (!"PENDING_REVIEW".equals(participant.getParticipantStatus())) {
+                throw new RuntimeException("Participant " + participant.getParticipantId() + " is not pending review");
+            }
+
             participant.setParticipantStatus("REJECTED");
             participantRepository.save(participant);
         }

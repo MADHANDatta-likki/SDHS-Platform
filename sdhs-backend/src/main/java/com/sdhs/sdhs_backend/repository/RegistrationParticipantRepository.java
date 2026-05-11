@@ -15,4 +15,9 @@ public interface RegistrationParticipantRepository extends JpaRepository<Registr
 
     List<RegistrationParticipant> findByParticipantStatus(String participantStatus);
 
+    List<RegistrationParticipant> findByParticipantStatusAndAddedLater(
+        String participantStatus,
+        Boolean addedLater
+);
+
 }

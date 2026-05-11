@@ -152,9 +152,13 @@ setSaving(true);
     }
 
     selectedServices.forEach(serviceId => {
+      const selectedService = serviceSections.find(
+        service => service.serviceId === serviceId
+      );
+
       placements.push({
         placementArea: 'SERVICE',
-        placementKey: 'SERVICE_SECTION',
+        placementKey: selectedService?.serviceKey || 'SERVICE_SECTION',
         relatedEntityType: 'SERVICE',
         relatedEntityId: serviceId,
         displayOrder: 1

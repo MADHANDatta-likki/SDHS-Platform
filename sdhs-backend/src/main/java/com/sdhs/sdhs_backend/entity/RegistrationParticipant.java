@@ -51,6 +51,9 @@ public class RegistrationParticipant {
     @Column(name = "payment_id")
     private Long paymentId;
 
+    @Column(name = "added_later")
+    private Boolean addedLater;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 }

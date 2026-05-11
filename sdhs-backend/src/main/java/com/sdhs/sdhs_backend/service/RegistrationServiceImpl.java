@@ -57,16 +57,6 @@ public class RegistrationServiceImpl implements RegistrationService {
 
         reg = registrationRepo.save(reg);
 
-        /*RegistrationPayment payment = new RegistrationPayment();
-        payment.setRegistrationId(reg.getRegistrationId());
-        payment.setAmount(request.getPayment().getAmount());
-        payment.setUtrNumber(request.getPayment().getUtrNumber());
-        payment.setTransactionDate(request.getPayment().getTransactionDate());
-        payment.setPaymentStatus("PENDING_REVIEW");
-        payment.setCreatedAt(LocalDateTime.now());
-
-        payment = paymentRepo.save(payment);*/
-
         for (CampRegistrationRequest.ParticipantDTO p : request.getParticipants()) {
 
             RegistrationParticipant rp = new RegistrationParticipant();
@@ -80,6 +70,7 @@ public class RegistrationServiceImpl implements RegistrationService {
             rp.setParticipantStatus("PENDING_REVIEW");
             rp.setPaymentId(null);
             rp.setCreatedAt(LocalDateTime.now());
+            rp.setAddedLater(false);
 
             participantRepo.save(rp);
         }
@@ -93,9 +84,19 @@ public class RegistrationServiceImpl implements RegistrationService {
 
         for (EventRegistration reg : registrations) {
             int count = participantRepo.countByRegistrationId(reg.getRegistrationId());
-           List<RegistrationPayment> payments =
-        paymentRepo.findAllByRegistrationId(reg.getRegistrationId());
+
+            List<RegistrationPayment> payments =
+                    paymentRepo.findAllByRegistrationId(reg.getRegistrationId());
+
             Event event = eventRepo.findById(reg.getEventId()).orElse(null);
+
+            BigDecimal totalAmount = payments.stream()
+                    .map(RegistrationPayment::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            String latestPaymentStatus = payments.isEmpty()
+                    ? "NA"
+                    : payments.get(payments.size() - 1).getPaymentStatus();
 
             response.add(new MyRegistrationResponse(
                     reg.getRegistrationId(),
@@ -103,10 +104,8 @@ public class RegistrationServiceImpl implements RegistrationService {
                     event != null ? event.getEventName() : "Unknown",
                     reg.getOverallStatus(),
                     count,
-                   payments.stream()
-        .map(RegistrationPayment::getAmount)
-        .reduce(BigDecimal.ZERO, BigDecimal::add),
-payments.isEmpty() ? "NA" : payments.get(payments.size() - 1).getPaymentStatus()
+                    totalAmount,
+                    latestPaymentStatus
             ));
         }
 
@@ -137,67 +136,66 @@ payments.isEmpty() ? "NA" : payments.get(payments.size() - 1).getPaymentStatus()
             rp.setParticipantStatus("PENDING_REVIEW");
             rp.setPaymentId(null);
             rp.setCreatedAt(LocalDateTime.now());
+            rp.setAddedLater(true);
 
             participantRepo.save(rp);
         }
     }
 
     @Override
-public RegistrationDetailsResponse getRegistrationDetails(Long registrationId) {
+    public RegistrationDetailsResponse getRegistrationDetails(Long registrationId) {
 
-    EventRegistration reg = registrationRepo.findById(registrationId)
-            .orElseThrow(() -> new RuntimeException("Registration not found"));
+        EventRegistration reg = registrationRepo.findById(registrationId)
+                .orElseThrow(() -> new RuntimeException("Registration not found"));
 
-    Event event = eventRepo.findById(reg.getEventId()).orElse(null);
+        Event event = eventRepo.findById(reg.getEventId()).orElse(null);
 
-    List<RegistrationParticipant> participants = 
-            participantRepo.findByRegistrationId(registrationId);
+        List<RegistrationParticipant> participants =
+                participantRepo.findByRegistrationId(registrationId);
 
-    List<RegistrationPayment> payments = 
-            paymentRepo.findAllByRegistrationId(registrationId);
+        List<RegistrationPayment> payments =
+                paymentRepo.findAllByRegistrationId(registrationId);
 
-    // Map Participants
-    List<RegistrationDetailsResponse.ParticipantDetails> participantDTOs = new ArrayList<>();
+        List<RegistrationDetailsResponse.ParticipantDetails> participantDTOs = new ArrayList<>();
 
-    for (RegistrationParticipant p : participants) {
-        participantDTOs.add(
-                new RegistrationDetailsResponse.ParticipantDetails(
-                        p.getParticipantId(),
-                        p.getVolunteerId(),
-                        p.getFullName(),
-                        p.getAge(),
-                        p.getRelationshipToPrimary(),
-                        p.getParticipantType(),
-                        p.getParticipantStatus(),
-                        p.getPaymentId()
-                )
+        for (RegistrationParticipant p : participants) {
+            participantDTOs.add(
+                    new RegistrationDetailsResponse.ParticipantDetails(
+                            p.getParticipantId(),
+                            p.getVolunteerId(),
+                            p.getFullName(),
+                            p.getAge(),
+                            p.getRelationshipToPrimary(),
+                            p.getParticipantType(),
+                            p.getParticipantStatus(),
+                            p.getPaymentId()
+                    )
+            );
+        }
+
+        List<RegistrationDetailsResponse.PaymentDetails> paymentDTOs = new ArrayList<>();
+
+        for (RegistrationPayment pay : payments) {
+            paymentDTOs.add(
+                    new RegistrationDetailsResponse.PaymentDetails(
+                            pay.getPaymentId(),
+                            pay.getAmount(),
+                            pay.getUtrNumber(),
+                            pay.getTransactionDate(),
+                            pay.getPaymentStatus(),
+                            pay.getVerifiedAt()
+                    )
+            );
+        }
+
+        return new RegistrationDetailsResponse(
+                reg.getRegistrationId(),
+                reg.getEventId(),
+                event != null ? event.getEventName() : "Unknown",
+                reg.getOverallStatus(),
+                reg.getTeamLeaderCode(),
+                participantDTOs,
+                paymentDTOs
         );
     }
-
-    // Map Payments
-    List<RegistrationDetailsResponse.PaymentDetails> paymentDTOs = new ArrayList<>();
-
-    for (RegistrationPayment pay : payments) {
-        paymentDTOs.add(
-                new RegistrationDetailsResponse.PaymentDetails(
-        pay.getPaymentId(),
-        pay.getAmount(),
-        pay.getUtrNumber(),
-        pay.getTransactionDate(),
-        pay.getPaymentStatus(),
-        pay.getVerifiedAt()
-)
-        );
-    }
-
-    return new RegistrationDetailsResponse(
-            reg.getRegistrationId(),
-            reg.getEventId(),
-            event != null ? event.getEventName() : "Unknown",
-            reg.getOverallStatus(),
-            reg.getTeamLeaderCode(),
-            participantDTOs,
-            paymentDTOs
-    );
-}
 }

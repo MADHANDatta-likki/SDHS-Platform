@@ -47,9 +47,13 @@ public class AdminPaymentServiceImpl implements AdminPaymentService {
             }
 
             List<RegistrationParticipant> participants =
-                    participantRepository.findByRegistrationId(
-                            registration.getRegistrationId()
-                    );
+                    participantRepository.findByRegistrationId(registration.getRegistrationId())
+                            .stream()
+                            .filter(participant ->
+                                    participant.getPaymentId() != null
+                                            && participant.getPaymentId().equals(payment.getPaymentId())
+                            )
+                            .toList();
 
             Map<String, Object> row = new HashMap<>();
             row.put("registrationId", registration.getRegistrationId());
@@ -72,9 +76,12 @@ public class AdminPaymentServiceImpl implements AdminPaymentService {
     public void verifyPayment(Long registrationId) {
 
         RegistrationPayment payment =
-                paymentRepository.findByRegistrationId(registrationId)
+                paymentRepository.findFirstByRegistrationIdAndPaymentStatusOrderByPaymentIdDesc(
+                                registrationId,
+                                "PAYMENT_SUBMITTED"
+                        )
                         .orElseThrow(() ->
-                                new RuntimeException("Payment not found")
+                                new RuntimeException("Submitted payment not found")
                         );
 
         payment.setPaymentStatus("PAYMENT_VERIFIED");
@@ -91,21 +98,30 @@ public class AdminPaymentServiceImpl implements AdminPaymentService {
         registration.setUpdatedAt(LocalDateTime.now());
         registrationRepository.save(registration);
         List<RegistrationParticipant> participants =
-        participantRepository.findByRegistrationId(registrationId);
+                participantRepository.findByRegistrationId(registrationId)
+                        .stream()
+                        .filter(participant ->
+                                participant.getPaymentId() != null
+                                        && participant.getPaymentId().equals(payment.getPaymentId())
+                        )
+                        .toList();
 
-for (RegistrationParticipant participant : participants) {
-    participant.setParticipantStatus("CONFIRMED");
-    participantRepository.save(participant);
-}
+        for (RegistrationParticipant participant : participants) {
+            participant.setParticipantStatus("CONFIRMED");
+            participantRepository.save(participant);
+        }
     }
 
     @Override
     public void rejectPayment(Long registrationId) {
 
         RegistrationPayment payment =
-                paymentRepository.findByRegistrationId(registrationId)
+                paymentRepository.findFirstByRegistrationIdAndPaymentStatusOrderByPaymentIdDesc(
+                                registrationId,
+                                "PAYMENT_SUBMITTED"
+                        )
                         .orElseThrow(() ->
-                                new RuntimeException("Payment not found")
+                                new RuntimeException("Submitted payment not found")
                         );
 
         payment.setPaymentStatus("PAYMENT_REJECTED");
@@ -121,15 +137,17 @@ for (RegistrationParticipant participant : participants) {
         registration.setUpdatedAt(LocalDateTime.now());
         registrationRepository.save(registration);
         List<RegistrationParticipant> participants =
+                participantRepository.findByRegistrationId(registrationId)
+                        .stream()
+                        .filter(participant ->
+                                participant.getPaymentId() != null
+                                        && participant.getPaymentId().equals(payment.getPaymentId())
+                        )
+                        .toList();
 
-            participantRepository.findByRegistrationId(registrationId);
-
-    for (RegistrationParticipant participant : participants) {
-
-        participant.setParticipantStatus("APPROVED_FOR_PAYMENT");
-
-        participantRepository.save(participant);
-
-    }
+        for (RegistrationParticipant participant : participants) {
+            participant.setParticipantStatus("APPROVED_FOR_PAYMENT");
+            participantRepository.save(participant);
+        }
     }
 }
