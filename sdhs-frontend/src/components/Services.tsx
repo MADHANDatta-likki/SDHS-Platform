@@ -121,7 +121,7 @@ function Services() {
     }
   };
 
-  const handleServiceClick = (service: ServiceCard) => {
+  const handleServiceClick = () => {
     const gallerySection = document.getElementById('gallery');
 
     if (gallerySection) {
@@ -146,7 +146,7 @@ function Services() {
               <button
                 type="button"
                 className="sdhs-service-card h-100 w-100 text-start border-0"
-                onClick={() => handleServiceClick(service)}
+                onClick={handleServiceClick}
               >
                 {service.imageUrl && (
                   <div className="sdhs-service-image mb-3">

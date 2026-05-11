@@ -6,8 +6,8 @@ function AdminImageUpload() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [imageUrl, setImageUrl] = useState('');
-  const uploadedBy =
-  localStorage.getItem('volunteerId') || 'SYSTEM';
+
+  const uploadedBy = localStorage.getItem('volunteerId') || 'SYSTEM';
 
   const [serviceSections, setServiceSections] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
@@ -16,10 +16,11 @@ function AdminImageUpload() {
   const [gallery, setGallery] = useState(false);
   const [selectedServices, setSelectedServices] = useState<number[]>([]);
   const [selectedEvent, setSelectedEvent] = useState('');
+
   const [saving, setSaving] = useState(false);
-const [successMessage, setSuccessMessage] = useState('');
-const [errorMessage, setErrorMessage] = useState('');
-const [uploading, setUploading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     loadServiceSections();
@@ -27,36 +28,34 @@ const [uploading, setUploading] = useState(false);
   }, []);
 
   const loadServiceSections = async () => {
-  try {
-    const response = await api.get('/service-sections');
-    console.log('Service sections:', response.data);
+    try {
+      const response = await api.get('/service-sections');
 
-    if (Array.isArray(response.data)) {
-      setServiceSections(response.data);
-    } else {
+      if (Array.isArray(response.data)) {
+        setServiceSections(response.data);
+      } else {
+        setServiceSections([]);
+      }
+    } catch (err) {
+      console.error('Service sections error:', err);
       setServiceSections([]);
     }
-  } catch (err) {
-    console.error('Service sections error:', err);
-    setServiceSections([]);
-  }
-};
+  };
 
   const loadEvents = async () => {
-  try {
-    const response = await api.get('/events/active');
-    console.log('Events:', response.data);
+    try {
+      const response = await api.get('/events/active');
 
-    if (Array.isArray(response.data)) {
-      setEvents(response.data);
-    } else {
+      if (Array.isArray(response.data)) {
+        setEvents(response.data);
+      } else {
+        setEvents([]);
+      }
+    } catch (err) {
+      console.error('Events error:', err);
       setEvents([]);
     }
-  } catch (err) {
-    console.error('Events error:', err);
-    setEvents([]);
-  }
-};
+  };
 
   const toggleService = (serviceId: number) => {
     if (selectedServices.includes(serviceId)) {
@@ -67,67 +66,64 @@ const [uploading, setUploading] = useState(false);
   };
 
   const handleFileUpload = async (
-  e: React.ChangeEvent<HTMLInputElement>
-) => {
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
 
-  const file = e.target.files?.[0];
+    if (!file) return;
 
-  if (!file) return;
+    try {
+      setUploading(true);
+      setErrorMessage('');
 
-  try {
+      const safeFileName = file.name
+        .toLowerCase()
+        .replace(/[^a-z0-9.]/g, '-')
+        .replace(/-+/g, '-');
 
-    setUploading(true);
-    setErrorMessage('');
+      const fileName = `${Date.now()}-${safeFileName}`;
+      const filePath = `gallery/${fileName}`;
 
-    const safeFileName = file.name
-  .toLowerCase()
-  .replace(/[^a-z0-9.]/g, '-')
-  .replace(/-+/g, '-');
+      const { error } = await supabase.storage
+        .from('sdhs-public-assets')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: file.type,
+        });
 
-const fileName = `${Date.now()}-${safeFileName}`;
-const filePath = `gallery/${fileName}`;
+      if (error) {
+        throw error;
+      }
 
-    const { error } = await supabase.storage
-      .from('sdhs-public-assets')
-      .upload(filePath, file);
+      const { data } = supabase.storage
+        .from('sdhs-public-assets')
+        .getPublicUrl(filePath);
 
-    if (error) {
-      throw error;
+      setImageUrl(data.publicUrl);
+    } catch (err) {
+      console.error(err);
+      setErrorMessage('Failed to upload image');
+    } finally {
+      setUploading(false);
     }
-
-    const { data } = supabase.storage
-      .from('sdhs-public-assets')
-      .getPublicUrl(filePath);
-
-    setImageUrl(data.publicUrl);
-
-  } catch (err) {
-
-    console.error(err);
-    setErrorMessage('Failed to upload image');
-
-  } finally {
-
-    setUploading(false);
-  }
-};
+  };
 
   const handleSubmit = async () => {
-
     setSuccessMessage('');
-setErrorMessage('');
+    setErrorMessage('');
 
-if (!title.trim()) {
-  setErrorMessage('Title is required');
-  return;
-}
+    if (!title.trim()) {
+      setErrorMessage('Title is required');
+      return;
+    }
 
-if (!imageUrl.trim()) {
-  setErrorMessage('Image URL is required');
-  return;
-}
+    if (!imageUrl.trim()) {
+      setErrorMessage('Please upload an image or paste an image URL');
+      return;
+    }
 
-setSaving(true);
+    setSaving(true);
 
     const placements: any[] = [];
 
@@ -137,7 +133,7 @@ setSaving(true);
         placementKey: 'HOME_HERO',
         relatedEntityType: null,
         relatedEntityId: null,
-        displayOrder: 1
+        displayOrder: 1,
       });
     }
 
@@ -147,7 +143,7 @@ setSaving(true);
         placementKey: 'GALLERY',
         relatedEntityType: null,
         relatedEntityId: null,
-        displayOrder: 1
+        displayOrder: 1,
       });
     }
 
@@ -161,7 +157,7 @@ setSaving(true);
         placementKey: selectedService?.serviceKey || 'SERVICE_SECTION',
         relatedEntityType: 'SERVICE',
         relatedEntityId: serviceId,
-        displayOrder: 1
+        displayOrder: 1,
       });
     });
 
@@ -171,7 +167,7 @@ setSaving(true);
         placementKey: 'EVENT_CARD',
         relatedEntityType: 'EVENT',
         relatedEntityId: Number(selectedEvent),
-        displayOrder: 1
+        displayOrder: 1,
       });
     }
 
@@ -181,41 +177,34 @@ setSaving(true);
       imageUrl,
       storagePath: imageUrl,
       uploadedBy,
-      placements
+      placements,
     };
 
     try {
+      await api.post('/admin/images', payload);
 
-  await api.post('/admin/images', payload);
+      setSuccessMessage('Image saved successfully');
 
-  setSuccessMessage('Image saved successfully');
-
-  setTitle('');
-  setDescription('');
-  setImageUrl('');
-  setHomeHero(false);
-  setGallery(false);
-  setSelectedServices([]);
-  setSelectedEvent('');
-
-} catch (err) {
-
-  console.error(err);
-  setErrorMessage('Failed to save image');
-
-} finally {
-
-  setSaving(false);
-}
+      setTitle('');
+      setDescription('');
+      setImageUrl('');
+      setHomeHero(false);
+      setGallery(false);
+      setSelectedServices([]);
+      setSelectedEvent('');
+    } catch (err) {
+      console.error(err);
+      setErrorMessage('Failed to save image');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <main className="container py-5">
-
       <h2 className="mb-4">Admin Image Upload</h2>
 
       <div className="card p-4">
-
         <div className="mb-3">
           <label className="form-label">Title</label>
           <input
@@ -235,55 +224,44 @@ setSaving(true);
         </div>
 
         <div className="mb-4">
+          <label className="form-label fw-bold">Upload Image</label>
+          <input
+            type="file"
+            className="form-control"
+            accept="image/*"
+            onChange={handleFileUpload}
+          />
+
+          {uploading && (
+            <small className="text-primary">Uploading image...</small>
+          )}
+        </div>
+
+        <div className="mb-4">
           <label className="form-label">Supabase Image URL</label>
-          <div className="mb-4">
-
-  <label className="form-label fw-bold">
-    Upload Image
-  </label>
-
-  <input
-    type="file"
-    className="form-control"
-    accept="image/*"
-    onChange={handleFileUpload}
-  />
-
-  {uploading && (
-    <small className="text-primary">
-      Uploading image...
-    </small>
-  )}
-
-</div>
           <input
             className="form-control"
             value={imageUrl}
             onChange={(e) => setImageUrl(e.target.value)}
           />
-          {imageUrl && (
-  <div className="mb-4">
-
-    <label className="form-label fw-bold">
-      Image Preview
-    </label>
-
-    <div className="border rounded p-2">
-
-      <img
-        src={imageUrl}
-        alt="preview"
-        className="img-fluid rounded"
-        style={{
-          maxHeight: '300px',
-          objectFit: 'cover'
-        }}
-      />
-
-    </div>
-  </div>
-)}
         </div>
+
+        {imageUrl && (
+          <div className="mb-4">
+            <label className="form-label fw-bold">Image Preview</label>
+            <div className="border rounded p-2">
+              <img
+                src={imageUrl}
+                alt="preview"
+                className="img-fluid rounded"
+                style={{
+                  maxHeight: '300px',
+                  objectFit: 'cover',
+                }}
+              />
+            </div>
+          </div>
+        )}
 
         <h5>Display Options</h5>
 
@@ -294,9 +272,7 @@ setSaving(true);
             checked={homeHero}
             onChange={(e) => setHomeHero(e.target.checked)}
           />
-          <label className="form-check-label">
-            Home Hero
-          </label>
+          <label className="form-check-label">Home Hero</label>
         </div>
 
         <div className="form-check mb-4">
@@ -306,9 +282,7 @@ setSaving(true);
             checked={gallery}
             onChange={(e) => setGallery(e.target.checked)}
           />
-          <label className="form-check-label">
-            Gallery
-          </label>
+          <label className="form-check-label">Gallery</label>
         </div>
 
         <h5>Services</h5>
@@ -344,25 +318,26 @@ setSaving(true);
             ))}
           </select>
         </div>
-{successMessage && (
-  <div className="alert alert-success">
-    {successMessage}
-  </div>
-)}
 
-{errorMessage && (
-  <div className="alert alert-danger">
-    {errorMessage}
-  </div>
-)}
+        {successMessage && (
+          <div className="alert alert-success mt-4">
+            {successMessage}
+          </div>
+        )}
+
+        {errorMessage && (
+          <div className="alert alert-danger mt-4">
+            {errorMessage}
+          </div>
+        )}
+
         <button
-  className="btn btn-primary mt-4"
-  onClick={handleSubmit}
-  disabled={saving}
->
-  {saving ? 'Saving...' : 'Save Image'}
-</button>
-
+          className="btn btn-primary mt-4"
+          onClick={handleSubmit}
+          disabled={saving}
+        >
+          {saving ? 'Saving...' : 'Save Image'}
+        </button>
       </div>
     </main>
   );

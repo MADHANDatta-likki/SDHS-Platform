@@ -22,6 +22,18 @@ const fallbackSlides: HeroSlide[] = [
     title: 'Serving Humanity with Compassion',
     text: 'Join SDHS volunteers in community service programs that support people in need.',
   },
+  {
+    image: '',
+    label: 'Spiritual Service',
+    title: 'Service is our Religion',
+    text: 'Dedicated volunteers supporting spiritual events, seva programs, and community gatherings.',
+  },
+  {
+    image: '',
+    label: 'Charitable Service',
+    title: 'Together We Can Help More',
+    text: 'Supporting charitable activities with love, discipline, devotion, and dedication.',
+  },
 ];
 
 function Hero() {
@@ -31,6 +43,28 @@ function Hero() {
     loadHeroImages();
   }, []);
 
+  const deriveHeroLabel = (image: SiteImage, index: number) => {
+    const text = `${image.title || ''} ${image.description || ''}`.toLowerCase();
+
+    if (text.includes('spiritual') || text.includes('puja') || text.includes('satsang')) {
+      return 'Spiritual Service';
+    }
+
+    if (text.includes('charitable') || text.includes('charity') || text.includes('donation')) {
+      return 'Charitable Service';
+    }
+
+    if (text.includes('medical') || text.includes('health')) {
+      return 'Medical Service';
+    }
+
+    if (text.includes('social') || text.includes('community')) {
+      return 'Social Service';
+    }
+
+    return fallbackSlides[index]?.label || 'SDHS Service';
+  };
+
   const loadHeroImages = async () => {
     try {
       const response = await api.get('/images/placement/HOME_HERO');
@@ -38,7 +72,7 @@ function Hero() {
       if (Array.isArray(response.data) && response.data.length > 0) {
         const slides = response.data.map((image: SiteImage, index: number) => ({
           image: image.imageUrl,
-          label: index === 0 ? 'Social Service' : 'SDHS Service',
+          label: deriveHeroLabel(image, index),
           title: image.title || 'Serving Humanity with Compassion',
           text:
             image.description ||

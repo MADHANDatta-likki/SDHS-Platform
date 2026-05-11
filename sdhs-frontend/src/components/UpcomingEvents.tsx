@@ -1,25 +1,101 @@
-const events = [
+import { useEffect, useState } from 'react';
+import api from '../services/api';
+
+type EventItem = {
+  eventId: number;
+  eventName: string;
+  location?: string;
+  startDate?: string;
+  endDate?: string;
+  imageUrl?: string;
+};
+
+type SiteImage = {
+  imageId: number;
+  title?: string;
+  description?: string;
+  imageUrl: string;
+};
+
+const fallbackEvents: EventItem[] = [
   {
-    title: 'Chaturmasya Vrata Deeksha',
-    location: 'Pithapuram',
-    date: '10 July 2025 - 7 September 2025',
-    image: '/assets/img/testimonials/testimonials-1.jpg',
-  },
-  {
-    title: 'Devi Navarathri',
-    location: 'Mysuru',
-    date: '22 September 2025 - 2 October 2025',
-    image: '/assets/img/testimonials/testimonials-2.jpg',
-  },
-  {
-    title: "Pujya Swamiji's Music for Meditation & Bhagavad Gita Parayana",
-    location: 'Vishakapatnam',
-    date: '8 November 2025 - 9 November 2025',
-    image: '/assets/img/testimonials/testimonials-3.jpg',
+    eventId: 1,
+    eventName: 'Volunteer Camp',
+    location: 'SDHS Campus',
+    startDate: '2026-01-01',
+    endDate: '2026-01-03',
   },
 ];
 
 function UpcomingEvents() {
+  const [events, setEvents] = useState<EventItem[]>(fallbackEvents);
+
+  useEffect(() => {
+    loadEvents();
+  }, []);
+
+  const formatDateRange = (start?: string, end?: string) => {
+    if (!start) return 'Upcoming Event';
+
+    const startDate = new Date(start).toLocaleDateString();
+
+    if (!end) {
+      return startDate;
+    }
+
+    const endDate = new Date(end).toLocaleDateString();
+
+    return `${startDate} - ${endDate}`;
+  };
+
+  const loadEvents = async () => {
+    try {
+      const response = await api.get('/events/active');
+
+      const eventData: EventItem[] = Array.isArray(response.data)
+        ? response.data
+        : [];
+
+      if (eventData.length === 0) {
+        setEvents(fallbackEvents);
+        return;
+      }
+
+      const enrichedEvents = await Promise.all(
+        eventData.map(async (event) => {
+          let imageUrl = '';
+
+          try {
+            const imageResponse = await api.get('/images/placement/EVENT_CARD');
+
+            const images: SiteImage[] = Array.isArray(imageResponse.data)
+              ? imageResponse.data
+              : [];
+
+            const matchingImage = images.find(
+              image =>
+                image.title?.toLowerCase().includes(event.eventName.toLowerCase())
+            );
+
+            imageUrl = matchingImage?.imageUrl || images[0]?.imageUrl || '';
+          } catch (error) {
+            console.error('Event image load error:', error);
+          }
+
+          return {
+            ...event,
+            imageUrl,
+          };
+        })
+      );
+
+      setEvents(enrichedEvents);
+    } catch (error) {
+      console.error('Error loading events:', error);
+      setEvents(fallbackEvents);
+    }
+  };
+
   return (
     <section id="events" className="section-padding bg-light">
       <div className="container">
@@ -33,17 +109,33 @@ function UpcomingEvents() {
 
         <div className="row g-4">
           {events.map((event) => (
-            <div className="col-md-6 col-lg-4" key={event.title} data-aos="zoom-in">
+            <div
+              className="col-md-6 col-lg-4"
+              key={event.eventId}
+              data-aos="zoom-in"
+            >
               <div className="sdhs-event-card h-100">
-                <img src={event.image} alt={event.title} />
+                {event.imageUrl ? (
+                  <img src={event.imageUrl} alt={event.eventName} />
+                ) : (
+                  <div className="sdhs-gallery-placeholder d-flex align-items-center justify-content-center">
+                    <span>{event.eventName}</span>
+                  </div>
+                )}
+
                 <div className="p-4">
-                  <p className="sdhs-event-date">{event.date}</p>
-                  <h4>{event.title}</h4>
+                  <p className="sdhs-event-date">
+                    {formatDateRange(event.startDate, event.endDate)}
+                  </p>
+
+                  <h4>{event.eventName}</h4>
+
                   <p className="text-muted mb-3">
                     <i className="bi bi-geo-alt-fill me-2"></i>
-                    {event.location}
+                    {event.location || 'SDHS'}
                   </p>
-                  <a href="#contact" className="btn btn-outline-primary btn-sm">
+
+                  <a href="/register" className="btn btn-outline-primary btn-sm">
                     Volunteer for Event
                   </a>
                 </div>

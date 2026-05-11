@@ -70,7 +70,7 @@ body {
 
 .sdhs-hero-image-card img {
   width: 100%;
-  height: 430px;
+  height: 400px;
   object-fit: cover;
 }
 
@@ -84,6 +84,7 @@ body {
 
 .sdhs-service-card:hover {
   transform: translateY(-6px);
+  cursor: pointer;
 }
 
 .sdhs-service-icon {
@@ -106,6 +107,23 @@ body {
 .sdhs-service-card p {
   color: var(--sdhs-muted);
 }
+
+.sdhs-service-image {
+  overflow: hidden;
+  border-radius: 18px;
+}
+
+.sdhs-service-image img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.sdhs-service-card:hover .sdhs-service-image img {
+  transform: scale(1.05);
+}
+
 
 
 
@@ -162,6 +180,14 @@ body {
   object-fit: cover;
 }
 
+.sdhs-event-card .sdhs-gallery-placeholder {
+  width: 100%;
+  height: 230px;
+  background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+  color: var(--sdhs-primary);
+  font-weight: 800;
+}
+
 .sdhs-event-card h4 {
   font-weight: 800;
   font-size: 1.2rem;
@@ -208,6 +234,16 @@ body {
   height: 280px;
   object-fit: cover;
   transition: 0.3s ease;
+}
+
+
+.sdhs-gallery-placeholder {
+  width: 100%;
+  height: 280px;
+  background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+  color: var(--sdhs-primary);
+  font-weight: 800;
+  font-size: 1.1rem;
 }
 
 .sdhs-gallery-card:hover img {
@@ -510,4 +546,11 @@ body {
   border-radius: 18px;
   padding: 18px;
   margin-top: 14px;
+}
+
+
+.sdhs-service-card,
+.sdhs-event-card,
+.sdhs-gallery-card {
+  border-radius: 20px;
 }
