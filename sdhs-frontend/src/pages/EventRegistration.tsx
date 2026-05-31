@@ -140,7 +140,8 @@ function EventRegistration() {
       console.error('Volunteer lookup error:', error);
 
       const latest = [...accompanying];
-      latest[index].lookupMessage = getErrorMessage(error);
+      latest[index].name = '';
+      latest[index].lookupMessage = `Volunteer ID ${accompanying[index]?.volunteerId?.trim().toUpperCase()} is invalid or not found in SDHS records.`;
       setAccompanying(latest);
     }
   };
@@ -170,13 +171,18 @@ function EventRegistration() {
     }
 
     for (const v of accompanying) {
-      if (!v.volunteerId?.trim() || !v.name?.trim() || !v.age || !v.relationship?.trim()) {
-        setFormError('Please complete all accompanying volunteer details before submitting.');
+      if (!v.volunteerId?.trim() || !v.name?.trim() || !v.age) {
+        setFormError('Please complete Volunteer ID, Full Name, and Age for all accompanying volunteers before submitting.');
         return;
       }
 
       if (v.lookupMessage === 'This volunteer is already registered for this event.') {
         setFormError(`Volunteer ${v.volunteerId} is already registered for this event.`);
+        return;
+      }
+
+      if (v.lookupMessage?.includes('invalid or not found')) {
+        setFormError(`Volunteer ID ${v.volunteerId} is invalid. Please enter a valid SDHS Volunteer ID.`);
         return;
       }
     }
@@ -196,7 +202,7 @@ function EventRegistration() {
           volunteerId: v.volunteerId.trim().toUpperCase(),
           fullName: v.name.trim(),
           age: Number(v.age),
-          relationship: v.relationship.trim(),
+          relationship: v.relationship?.trim() || '',
           type: 'ACCOMPANYING',
         })),
       ];
@@ -400,7 +406,7 @@ function EventRegistration() {
                         </div>
 
                         <div className="col-md-3">
-                          <label className="form-label">Relationship</label>
+                          <label className="form-label">Relationship <span className="text-muted">(optional)</span></label>
                           <input
                             className="form-control"
                             placeholder="Relationship"
@@ -420,7 +426,14 @@ function EventRegistration() {
                         </div>
                       </div>
                       {vol.lookupMessage && (
-                        <small className={vol.lookupMessage.includes('already registered') ? 'text-danger' : 'text-muted'}>
+                        <small
+                          className={
+                            vol.lookupMessage.includes('already registered') ||
+                            vol.lookupMessage.includes('invalid or not found')
+                              ? 'text-danger'
+                              : 'text-muted'
+                          }
+                        >
                           {vol.lookupMessage}
                         </small>
                       )}

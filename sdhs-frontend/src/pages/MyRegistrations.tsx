@@ -8,6 +8,7 @@ type MyRegistration = {
   participantsCount: number;
   amount: number;
   paymentStatus: string;
+  hasPendingAdditionalVolunteers?: boolean;
 };
 
 function MyRegistrations() {
@@ -72,25 +73,31 @@ function MyRegistrations() {
                     </p>
                     
 
-                    <p className="mb-3">
+                    <p className="mb-2">
                       Registration Status: <strong>{reg.status}</strong>
                     </p>
 
+                    {reg.hasPendingAdditionalVolunteers && (
+                      <div className="alert alert-warning py-2 px-3 small">
+                        Additional volunteers are pending organizer review.
+                      </div>
+                    )}
+
                     <button
-  className="btn btn-outline-primary"
-  onClick={() =>
-    (window.location.href = `/volunteer/registration/${reg.registrationId}`)
-  }
->
-  View Details
-</button>
+                      className="btn btn-outline-primary w-100"
+                      onClick={() =>
+                        (window.location.href = `/volunteer/registration/${reg.registrationId}`)
+                      }
+                    >
+                      View Details
+                    </button>
                     <button
-  className="btn btn-primary mt-2 w-100"
-  onClick={() => handleAddVolunteers(reg.registrationId)}
->
-  Add Volunteers
-</button>
-                    {reg.status === 'APPROVED_FOR_PAYMENT' && (
+                      className="btn btn-primary mt-2 w-100"
+                      onClick={() => handleAddVolunteers(reg.registrationId)}
+                    >
+                      Add Volunteers
+                    </button>
+                    {reg.status === 'APPROVED_FOR_PAYMENT' && !reg.hasPendingAdditionalVolunteers && (
                       <button
                         className="btn btn-success mt-2 w-100"
                         onClick={() =>

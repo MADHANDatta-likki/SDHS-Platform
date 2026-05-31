@@ -13,9 +13,9 @@ function Home() {
     <>
       <Header />
       <Hero />
+      <UpcomingEvents />
       <Services />
       <About />
-      <UpcomingEvents />
       <Gallery />
       <FAQ />
       <Contact />

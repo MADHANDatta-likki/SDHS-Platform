@@ -10,6 +10,26 @@ function AdminRegistrationApproval() {
     loadApprovalQueue();
   }, []);
 
+  const getVolunteerImageUrl = (volunteerId?: string) => {
+    if (!volunteerId) {
+      return '';
+    }
+
+    return `https://sdhs2.azurewebsites.net/Images/Volunteers/${volunteerId}.jpg?sdfd944`;
+  };
+
+  const handleVolunteerImageError = (
+    event: React.SyntheticEvent<HTMLImageElement, Event>
+  ) => {
+    event.currentTarget.style.display = 'none';
+
+    const fallback = event.currentTarget.nextElementSibling as HTMLElement | null;
+
+    if (fallback) {
+      fallback.style.display = 'flex';
+    }
+  };
+
   const loadApprovalQueue = async () => {
     try {
       setLoading(true);
@@ -154,13 +174,35 @@ function AdminRegistrationApproval() {
 
                       <div className="mb-3">
                         <strong>Participant Details</strong>
-                        <ul className="mt-2 mb-0">
+
+                        <div className="mt-3 d-flex flex-column gap-3">
                           {reg.participants?.map((p: any) => (
-                            <li key={p.participantId}>
-                              {p.fullName} ({p.volunteerId}) - {p.participantType}
-                            </li>
+                            <div
+                              className="d-flex align-items-center gap-3 border rounded p-2"
+                              key={p.participantId}
+                            >
+                              <div className="sdhs-volunteer-photo-wrapper">
+                                <img
+                                  src={getVolunteerImageUrl(p.volunteerId)}
+                                  alt={p.fullName}
+                                  className="sdhs-volunteer-photo"
+                                  onError={handleVolunteerImageError}
+                                />
+
+                                <div className="sdhs-volunteer-photo-fallback">
+                                  No Image
+                                </div>
+                              </div>
+
+                              <div>
+                                <div className="fw-bold">{p.fullName}</div>
+                                <div className="text-muted small">
+                                  {p.volunteerId} - {p.participantType}
+                                </div>
+                              </div>
+                            </div>
                           ))}
-                        </ul>
+                        </div>
                       </div>
 
                       <div className="d-flex gap-2">
@@ -209,6 +251,26 @@ function AdminRegistrationApproval() {
 
                       <div className="alert alert-light border mb-3">
                         Primary volunteer may already have completed payment. This approval is only for the newly added volunteer shown below.
+                      </div>
+
+                      <div className="d-flex align-items-center gap-3 mb-3">
+                        <div className="sdhs-volunteer-photo-wrapper">
+                          <img
+                            src={getVolunteerImageUrl(participant.volunteerId)}
+                            alt={participant.fullName}
+                            className="sdhs-volunteer-photo"
+                            onError={handleVolunteerImageError}
+                          />
+
+                          <div className="sdhs-volunteer-photo-fallback">
+                            No Image
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="fw-bold">{participant.fullName}</div>
+                          <div className="text-muted small">{participant.volunteerId}</div>
+                        </div>
                       </div>
 
                       <p className="mb-1">

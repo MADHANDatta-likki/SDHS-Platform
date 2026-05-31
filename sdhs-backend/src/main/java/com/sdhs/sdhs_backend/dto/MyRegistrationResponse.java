@@ -16,4 +16,5 @@ public class MyRegistrationResponse {
     private Integer participantsCount;
     private BigDecimal amount;
     private String paymentStatus;
+    private Boolean hasPendingAdditionalVolunteers;
 }

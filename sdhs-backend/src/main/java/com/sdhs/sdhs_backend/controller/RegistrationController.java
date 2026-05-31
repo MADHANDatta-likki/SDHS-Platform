@@ -1,5 +1,4 @@
 package com.sdhs.sdhs_backend.controller;
-
 import com.sdhs.sdhs_backend.dto.AddParticipantsRequest;
 import com.sdhs.sdhs_backend.dto.CampRegistrationRequest;
 import com.sdhs.sdhs_backend.service.RegistrationService;
@@ -43,4 +42,28 @@ public ResponseEntity<?> getRegistrationDetails(@PathVariable Long registrationI
             registrationService.getRegistrationDetails(registrationId)
     );
 }
+
+
+@ExceptionHandler(RuntimeException.class)
+public ResponseEntity<?> handleRuntimeException(RuntimeException ex) {
+
+    String message = ex.getMessage();
+
+    if (message == null || message.isBlank()) {
+        message = "Registration request could not be processed. Please check the details and try again.";
+    }
+
+    if (message.contains("uq_event_volunteer_participant")
+            || message.contains("duplicate key value")) {
+
+        message = "One or more selected volunteers are already registered for this event.";
+    }
+
+    if (message.contains("Request processing failed")) {
+        message = "Registration request could not be processed. Please check the details and try again.";
+    }
+
+    return ResponseEntity.badRequest().body(message);
+}
+
 }

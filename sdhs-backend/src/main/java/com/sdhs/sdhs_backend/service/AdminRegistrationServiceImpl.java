@@ -9,6 +9,7 @@ import com.sdhs.sdhs_backend.repository.EventRepository;
 import com.sdhs.sdhs_backend.repository.RegistrationParticipantRepository;
 import com.sdhs.sdhs_backend.repository.RegistrationPaymentRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -64,6 +65,7 @@ public class AdminRegistrationServiceImpl implements AdminRegistrationService {
     }
 
     @Override
+    @Transactional
     public void approveRegistration(Long registrationId) {
 
         EventRegistration registration =
@@ -71,7 +73,14 @@ public class AdminRegistrationServiceImpl implements AdminRegistrationService {
                         .orElseThrow(() -> new RuntimeException("Registration not found"));
 
         List<RegistrationParticipant> participants =
-                participantRepository.findByRegistrationId(registrationId);
+                participantRepository.findByRegistrationId(registrationId)
+                        .stream()
+                        .filter(participant -> !Boolean.TRUE.equals(participant.getAddedLater()))
+                        .toList();
+
+        if (participants.isEmpty()) {
+            throw new RuntimeException("No participants found for this registration");
+        }
 
         Event event =
                 eventRepository.findById(registration.getEventId())
@@ -87,7 +96,13 @@ public class AdminRegistrationServiceImpl implements AdminRegistrationService {
         payment.setPaymentStatus("PENDING_PAYMENT");
         payment.setCreatedAt(LocalDateTime.now());
 
-        paymentRepository.save(payment);
+        payment = paymentRepository.save(payment);
+
+        for (RegistrationParticipant participant : participants) {
+            participant.setParticipantStatus("APPROVED_FOR_PAYMENT");
+            participant.setPaymentId(payment.getPaymentId());
+            participantRepository.save(participant);
+        }
 
         registration.setOverallStatus("APPROVED_FOR_PAYMENT");
         registration.setUpdatedAt(LocalDateTime.now());
@@ -96,6 +111,7 @@ public class AdminRegistrationServiceImpl implements AdminRegistrationService {
     }
 
     @Override
+    @Transactional
     public void rejectRegistration(Long registrationId) {
 
         EventRegistration registration =
@@ -106,5 +122,16 @@ public class AdminRegistrationServiceImpl implements AdminRegistrationService {
         registration.setUpdatedAt(LocalDateTime.now());
 
         registrationRepository.save(registration);
+
+        List<RegistrationParticipant> participants =
+                participantRepository.findByRegistrationId(registrationId)
+                        .stream()
+                        .filter(participant -> !Boolean.TRUE.equals(participant.getAddedLater()))
+                        .toList();
+
+        for (RegistrationParticipant participant : participants) {
+            participant.setParticipantStatus("REJECTED");
+            participantRepository.save(participant);
+        }
     }
 }

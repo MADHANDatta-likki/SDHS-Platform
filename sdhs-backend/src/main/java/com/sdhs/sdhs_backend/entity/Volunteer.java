@@ -35,6 +35,9 @@ public class Volunteer {
     @Column(name = "\"Email\"")
     private String email;
 
+    @Column(name = "\"DateOfBirth\"")
+private java.time.LocalDate dateOfBirth;
+
     @Column(name = "\"Gender\"")
     private String gender;
 

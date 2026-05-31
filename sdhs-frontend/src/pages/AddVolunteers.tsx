@@ -6,11 +6,7 @@ function AddVolunteers() {
   const { registrationId } = useParams();
 
   const [volunteers, setVolunteers] = useState<any[]>([]);
-  const [utr, setUtr] = useState('');
-  const [date, setDate] = useState('');
   const [error, setError] = useState('');
-
-  const FEE_PER_PERSON = 1000; // later this should come from backend event fee
 
   const addRow = () => {
     setVolunteers([
@@ -21,6 +17,43 @@ function AddVolunteers() {
 
   const removeRow = (indexToRemove: number) => {
     setVolunteers(volunteers.filter((_, index) => index !== indexToRemove));
+  };
+
+  const lookupVolunteer = async (index: number, volunteerId: string) => {
+    const cleanedVolunteerId = volunteerId.trim().toUpperCase();
+
+    if (!cleanedVolunteerId) {
+      return;
+    }
+
+    try {
+      setError('');
+
+      const response = await api.get(`/volunteers/${cleanedVolunteerId}`);
+      const volunteer = response.data;
+
+      const updated = [...volunteers];
+      updated[index] = {
+        ...updated[index],
+        volunteerId: cleanedVolunteerId,
+        name: volunteer.displayName || volunteer.fullName || '',
+        age: volunteer.age || updated[index].age || '',
+      };
+
+      setVolunteers(updated);
+    } catch (err: any) {
+      console.error('Volunteer lookup error:', err);
+
+      const updated = [...volunteers];
+      updated[index] = {
+        ...updated[index],
+        volunteerId: cleanedVolunteerId,
+        name: '',
+      };
+
+      setVolunteers(updated);
+      setError(`Volunteer ID ${cleanedVolunteerId} was not found in SDHS records.`);
+    }
   };
 
   const handleSubmit = async () => {
@@ -36,10 +69,9 @@ function AddVolunteers() {
       if (
         !v.volunteerId.trim() ||
         !v.name.trim() ||
-        !String(v.age).trim() ||
-        !v.relationship.trim()
+        !String(v.age).trim()
       ) {
-        setError('All fields are required for each volunteer');
+        setError('Volunteer ID, Full Name, and Age are required for each volunteer. Relationship is optional.');
         return;
       }
     }
@@ -52,37 +84,38 @@ function AddVolunteers() {
       return;
     }
 
-    if (!utr.trim() || !date) {
-      setError('Payment details are required');
-      return;
-    }
-
     const payload = {
       participants: volunteers.map((v) => ({
         volunteerId: v.volunteerId.trim().toUpperCase(),
         fullName: v.name.trim(),
         age: Number(v.age),
-        relationship: v.relationship.trim(),
+        relationship: v.relationship?.trim() || '',
       })),
-      payment: {
-        amount: volunteers.length * FEE_PER_PERSON,
-        utrNumber: utr.trim(),
-        transactionDate: date,
-      },
+      payment: null,
     };
 
     await api.post(`/registrations/${registrationId}/add-volunteers`, payload);
 
-    alert('Volunteers added successfully');
+    alert('Volunteers submitted successfully and pending organizer review.');
     window.location.href = '/volunteer/registrations';
   } catch (err: any) {
     console.error('Add volunteers error:', err);
 
-    setError(
+    const backendMessage =
       typeof err.response?.data === 'string'
         ? err.response.data
-        : 'Failed to add volunteers. Please check details and try again.'
-    );
+        : err.response?.data?.message || '';
+
+    if (
+      backendMessage.includes('already registered') ||
+      backendMessage.includes('uq_event_volunteer_participant') ||
+      backendMessage.includes('duplicate key value')
+    ) {
+      setError('One or more selected volunteers are already registered for this event. Please remove duplicate volunteers and try again.');
+      return;
+    }
+
+    setError('Failed to add volunteers. Please check details and try again.');
   }
 };
 
@@ -134,8 +167,10 @@ function AddVolunteers() {
                     onChange={(e) => {
                       const updated = [...volunteers];
                       updated[index].volunteerId = e.target.value;
+                      updated[index].name = '';
                       setVolunteers(updated);
                     }}
+                    onBlur={(e) => lookupVolunteer(index, e.target.value)}
                   />
                 </div>
 
@@ -145,6 +180,7 @@ function AddVolunteers() {
                     className="form-control"
                     placeholder="Full Name"
                     value={volunteer.name}
+                    readOnly
                     onChange={(e) => {
                       const updated = [...volunteers];
                       updated[index].name = e.target.value;
@@ -169,7 +205,7 @@ function AddVolunteers() {
                 </div>
 
                 <div className="col-md-3">
-                  <label className="form-label">Relationship</label>
+                  <label className="form-label">Relationship <span className="text-muted">(optional)</span></label>
                   <input
                     className="form-control"
                     placeholder="Relationship"
@@ -195,53 +231,14 @@ function AddVolunteers() {
             </div>
           ))}
 
-          <div className="card p-3 mt-4">
-            <h5 className="fw-bold">Payment Details</h5>
-
-            <div className="row g-3">
-              <div className="col-md-3">
-                <label className="form-label">Participants</label>
-                <input className="form-control" value={volunteers.length} readOnly />
-              </div>
-
-              <div className="col-md-3">
-                <label className="form-label">Total Amount</label>
-                <input
-                  className="form-control"
-                  value={`₹${volunteers.length * FEE_PER_PERSON}`}
-                  readOnly
-                />
-              </div>
-
-              <div className="col-md-3">
-                <label className="form-label">UTR Number</label>
-                <input
-                  className="form-control"
-                  value={utr}
-                  onChange={(e) => setUtr(e.target.value)}
-                />
-              </div>
-
-              <div className="col-md-3">
-                <label className="form-label">Transaction Date</label>
-                <input
-                  type="date"
-                  className="form-control"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
-
           <div className="mt-4">
-           <button
-  type="button"
-  className="btn btn-success me-2"
-  onClick={handleSubmit}
-  disabled={volunteers.length === 0 || !utr || !date}
->
-              Submit
+            <button
+              type="button"
+              className="btn btn-success me-2"
+              onClick={handleSubmit}
+              disabled={volunteers.length === 0}
+            >
+              Submit for Review
             </button>
 
             <button

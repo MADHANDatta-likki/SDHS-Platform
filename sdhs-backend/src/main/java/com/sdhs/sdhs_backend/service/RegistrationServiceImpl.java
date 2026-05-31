@@ -13,6 +13,7 @@ import com.sdhs.sdhs_backend.repository.EventRepository;
 import com.sdhs.sdhs_backend.repository.RegistrationParticipantRepository;
 import com.sdhs.sdhs_backend.repository.RegistrationPaymentRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -72,7 +73,13 @@ public class RegistrationServiceImpl implements RegistrationService {
             rp.setCreatedAt(LocalDateTime.now());
             rp.setAddedLater(false);
 
-            participantRepo.save(rp);
+            try {
+                participantRepo.save(rp);
+            } catch (DataIntegrityViolationException ex) {
+                throw new RuntimeException(
+                        "Volunteer " + p.getVolunteerId() + " is already registered for this event"
+                );
+            }
         }
     }
 
@@ -98,6 +105,13 @@ public class RegistrationServiceImpl implements RegistrationService {
                     ? "NA"
                     : payments.get(payments.size() - 1).getPaymentStatus();
 
+            boolean hasPendingAdditionalVolunteers = participantRepo.findByRegistrationId(reg.getRegistrationId())
+                    .stream()
+                    .anyMatch(participant ->
+                            Boolean.TRUE.equals(participant.getAddedLater())
+                                    && "PENDING_REVIEW".equals(participant.getParticipantStatus())
+                    );
+
             response.add(new MyRegistrationResponse(
                     reg.getRegistrationId(),
                     reg.getEventId(),
@@ -105,7 +119,8 @@ public class RegistrationServiceImpl implements RegistrationService {
                     reg.getOverallStatus(),
                     count,
                     totalAmount,
-                    latestPaymentStatus
+                    latestPaymentStatus,
+                    hasPendingAdditionalVolunteers
             ));
         }
 
@@ -138,7 +153,13 @@ public class RegistrationServiceImpl implements RegistrationService {
             rp.setCreatedAt(LocalDateTime.now());
             rp.setAddedLater(true);
 
-            participantRepo.save(rp);
+            try {
+                participantRepo.save(rp);
+            } catch (DataIntegrityViolationException ex) {
+                throw new RuntimeException(
+                        "Volunteer " + p.getVolunteerId() + " is already registered for this event"
+                );
+            }
         }
     }
 
