@@ -86,8 +86,31 @@ public class AdminRegistrationServiceImpl implements AdminRegistrationService {
                 eventRepository.findById(registration.getEventId())
                         .orElseThrow(() -> new RuntimeException("Event not found"));
 
+        if (!Boolean.TRUE.equals(event.getPaymentRequired())) {
+            RegistrationPayment payment = new RegistrationPayment();
+            payment.setRegistrationId(registrationId);
+            payment.setAmount(BigDecimal.ZERO);
+            payment.setPaymentStatus("NOT_REQUIRED");
+            payment.setCreatedAt(LocalDateTime.now());
+            payment.setVerifiedAt(LocalDateTime.now());
+            payment.setVerifiedBy("SYSTEM");
+
+            payment = paymentRepository.save(payment);
+
+            for (RegistrationParticipant participant : participants) {
+                participant.setParticipantStatus("CONFIRMED");
+                participant.setPaymentId(payment.getPaymentId());
+                participantRepository.save(participant);
+            }
+
+            registration.setOverallStatus("CONFIRMED");
+            registration.setUpdatedAt(LocalDateTime.now());
+            registrationRepository.save(registration);
+            return;
+        }
+
         BigDecimal totalAmount =
-                event.getFeePerPerson()
+                getVolunteerAmount(event)
                         .multiply(BigDecimal.valueOf(participants.size()));
 
         RegistrationPayment payment = new RegistrationPayment();
@@ -133,5 +156,17 @@ public class AdminRegistrationServiceImpl implements AdminRegistrationService {
             participant.setParticipantStatus("REJECTED");
             participantRepository.save(participant);
         }
+    }
+
+    private BigDecimal getVolunteerAmount(Event event) {
+        if (event.getAmountPerVolunteer() != null) {
+            return event.getAmountPerVolunteer();
+        }
+
+        if (event.getFeePerPerson() != null) {
+            return event.getFeePerPerson();
+        }
+
+        return BigDecimal.ZERO;
     }
 }

@@ -98,17 +98,21 @@ public class AdminParticipantServiceImpl implements AdminParticipantService {
             throw new RuntimeException("No participants selected");
         }
 
-        BigDecimal totalAmount =
-                event.getFeePerPerson()
-                        .multiply(BigDecimal.valueOf(selectedParticipants.size()));
+        RegistrationPayment payment = null;
 
-        RegistrationPayment payment = new RegistrationPayment();
-        payment.setRegistrationId(request.getRegistrationId());
-        payment.setAmount(totalAmount);
-        payment.setPaymentStatus("PENDING_PAYMENT");
-        payment.setCreatedAt(LocalDateTime.now());
+        if (Boolean.TRUE.equals(event.getPaymentRequired())) {
+            BigDecimal totalAmount =
+                    getVolunteerAmount(event)
+                            .multiply(BigDecimal.valueOf(selectedParticipants.size()));
 
-        payment = paymentRepository.save(payment);
+            payment = new RegistrationPayment();
+            payment.setRegistrationId(request.getRegistrationId());
+            payment.setAmount(totalAmount);
+            payment.setPaymentStatus("PENDING_PAYMENT");
+            payment.setCreatedAt(LocalDateTime.now());
+
+            payment = paymentRepository.save(payment);
+        }
 
         for (RegistrationParticipant participant : selectedParticipants) {
 
@@ -124,13 +128,18 @@ public class AdminParticipantServiceImpl implements AdminParticipantService {
                 throw new RuntimeException("Participant " + participant.getParticipantId() + " is not pending review");
             }
 
-            participant.setParticipantStatus("APPROVED_FOR_PAYMENT");
-            participant.setPaymentId(payment.getPaymentId());
+            if (payment == null) {
+                participant.setParticipantStatus("CONFIRMED");
+                participant.setPaymentId(null);
+            } else {
+                participant.setParticipantStatus("APPROVED_FOR_PAYMENT");
+                participant.setPaymentId(payment.getPaymentId());
+            }
 
             participantRepository.save(participant);
         }
 
-        registration.setOverallStatus("APPROVED_FOR_PAYMENT");
+        registration.setOverallStatus(payment == null ? "CONFIRMED" : "APPROVED_FOR_PAYMENT");
         registration.setUpdatedAt(LocalDateTime.now());
         registrationRepository.save(registration);
     }
@@ -154,5 +163,17 @@ public class AdminParticipantServiceImpl implements AdminParticipantService {
             participant.setParticipantStatus("REJECTED");
             participantRepository.save(participant);
         }
+    }
+
+    private BigDecimal getVolunteerAmount(Event event) {
+        if (event.getAmountPerVolunteer() != null) {
+            return event.getAmountPerVolunteer();
+        }
+
+        if (event.getFeePerPerson() != null) {
+            return event.getFeePerPerson();
+        }
+
+        return BigDecimal.ZERO;
     }
 }

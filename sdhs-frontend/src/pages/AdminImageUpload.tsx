@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../services/api';
 import { supabase } from '../services/supabase';
 
@@ -202,7 +203,13 @@ function AdminImageUpload() {
 
   return (
     <main className="container py-5">
-      <h2 className="mb-4">Admin Image Upload</h2>
+      <div className="d-flex justify-content-between align-items-center gap-3 mb-4 flex-wrap">
+        <h2 className="mb-0">Admin Image Upload</h2>
+
+        <Link className="btn btn-outline-secondary" to="/admin/dashboard">
+          Back to Dashboard
+        </Link>
+      </div>
 
       <div className="card p-4">
         <div className="mb-3">

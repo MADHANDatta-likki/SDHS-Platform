@@ -1,9 +1,6 @@
-
-
 import { useEffect, useMemo, useState } from 'react';
-import axios from 'axios';
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+import { Link } from 'react-router-dom';
+import api from '../services/api';
 
 interface ParticipantReportRow {
   registrationId: number;
@@ -36,6 +33,7 @@ export default function AdminParticipantReport() {
 
   const [eventId, setEventId] = useState('');
   const [participantStatus, setParticipantStatus] = useState('');
+  const [paymentStatus, setPaymentStatus] = useState('');
   const [centerCode, setCenterCode] = useState('');
   const [searchText, setSearchText] = useState('');
 
@@ -46,7 +44,7 @@ export default function AdminParticipantReport() {
 
   const loadEvents = async () => {
     try {
-      const response = await axios.get(`${API_BASE}/api/events/active`);
+      const response = await api.get('/events/active');
       setEvents(response.data || []);
     } catch (error) {
       console.error('Error loading events:', error);
@@ -57,13 +55,14 @@ export default function AdminParticipantReport() {
     try {
       setLoading(true);
 
-      const response = await axios.get(
-        `${API_BASE}/api/admin/reports/participants`,
+      const response = await api.get(
+        '/admin/reports/participants',
         {
           params: {
             eventId: eventId || undefined,
             participantStatus: participantStatus || undefined,
             centerCode: centerCode || undefined,
+            paymentStatus: paymentStatus || undefined,
           },
         }
       );
@@ -90,6 +89,18 @@ export default function AdminParticipantReport() {
     );
   }, [rows, searchText]);
 
+  const getPaymentStatusLabel = (status?: string) => {
+    if (!status) {
+      return 'NA';
+    }
+
+    if (status === 'NOT_REQUIRED') {
+      return 'No Payment Required';
+    }
+
+    return status;
+  };
+
   const exportCsv = () => {
     const headers = [
       'Volunteer ID',
@@ -115,7 +126,7 @@ export default function AdminParticipantReport() {
       row.eventName,
       row.registrationStatus,
       row.participantStatus,
-      row.paymentStatus,
+      getPaymentStatusLabel(row.paymentStatus),
       row.accommodationRequired ? 'YES' : 'NO',
     ]);
 
@@ -139,13 +150,19 @@ export default function AdminParticipantReport() {
         <div>
           <h2 className="fw-bold mb-1">Participant Report</h2>
           <p className="text-muted mb-0">
-            Approved registrations and payment completed participant details.
+            Filter event participants by registration, participant, and payment status.
           </p>
         </div>
 
-        <button className="btn btn-success" onClick={exportCsv}>
-          Export CSV
-        </button>
+        <div className="d-flex gap-2 flex-wrap">
+          <Link className="btn btn-outline-secondary" to="/admin/dashboard">
+            Back to Dashboard
+          </Link>
+
+          <button className="btn btn-success" onClick={exportCsv}>
+            Export CSV
+          </button>
+        </div>
       </div>
 
       <div className="card shadow-sm border-0 mb-4">
@@ -169,7 +186,7 @@ export default function AdminParticipantReport() {
               </select>
             </div>
 
-            <div className="col-12 col-md-6 col-lg-3">
+            <div className="col-12 col-md-6 col-lg-2">
               <label className="form-label fw-semibold">Status</label>
 
               <select
@@ -182,11 +199,25 @@ export default function AdminParticipantReport() {
                 <option value="APPROVED_FOR_PAYMENT">
                   Approved Pending Payment
                 </option>
-                <option value="PAYMENT_SUBMITTED">
-                  Payment Submitted
-                </option>
                 <option value="CONFIRMED">Confirmed</option>
                 <option value="REJECTED">Rejected</option>
+              </select>
+            </div>
+
+            <div className="col-12 col-md-6 col-lg-2">
+              <label className="form-label fw-semibold">Payment</label>
+
+              <select
+                className="form-select"
+                value={paymentStatus}
+                onChange={(e) => setPaymentStatus(e.target.value)}
+              >
+                <option value="">All</option>
+                <option value="NOT_REQUIRED">No Payment Required</option>
+                <option value="PENDING_PAYMENT">Pending Payment</option>
+                <option value="PAYMENT_SUBMITTED">Payment Submitted</option>
+                <option value="PAYMENT_VERIFIED">Payment Verified</option>
+                <option value="PAYMENT_REJECTED">Payment Rejected</option>
               </select>
             </div>
 
@@ -201,7 +232,7 @@ export default function AdminParticipantReport() {
               />
             </div>
 
-            <div className="col-12 col-md-6 col-lg-3">
+            <div className="col-12 col-md-6 col-lg-2">
               <label className="form-label fw-semibold">
                 Volunteer Search
               </label>
@@ -250,8 +281,13 @@ export default function AdminParticipantReport() {
                 <tbody>
                   {filteredRows.length === 0 ? (
                     <tr>
-                      <td colSpan={10} className="text-center py-5 text-muted">
-                        No participant records found.
+                      <td colSpan={10} className="text-center py-5">
+                        <div className="text-muted mb-3">
+                          No participant records found for the selected filters.
+                        </div>
+                        <Link className="btn btn-outline-secondary" to="/admin/dashboard">
+                          Back to Dashboard
+                        </Link>
                       </td>
                     </tr>
                   ) : (
@@ -301,7 +337,7 @@ export default function AdminParticipantReport() {
 
                         <td>
                           <span className="badge bg-success">
-                            {row.paymentStatus || 'NA'}
+                            {getPaymentStatusLabel(row.paymentStatus)}
                           </span>
                         </td>
 

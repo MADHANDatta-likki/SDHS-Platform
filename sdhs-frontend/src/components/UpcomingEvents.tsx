@@ -8,6 +8,7 @@ type EventItem = {
   startDate?: string;
   endDate?: string;
   imageUrl?: string;
+  eventImageUrl?: string;
 };
 
 type SiteImage = {
@@ -63,7 +64,7 @@ function UpcomingEvents() {
 
       const enrichedEvents = await Promise.all(
         eventData.map(async (event) => {
-          let imageUrl = '';
+          let imageUrl = event.eventImageUrl || '';
 
           try {
             const imageResponse = await api.get('/images/placement/EVENT_CARD');
@@ -77,7 +78,7 @@ function UpcomingEvents() {
                 image.title?.toLowerCase().includes(event.eventName.toLowerCase())
             );
 
-            imageUrl = matchingImage?.imageUrl || images[0]?.imageUrl || '';
+            imageUrl = imageUrl || matchingImage?.imageUrl || images[0]?.imageUrl || '';
           } catch (error) {
             console.error('Event image load error:', error);
           }
@@ -135,7 +136,7 @@ function UpcomingEvents() {
                     {event.location || 'SDHS'}
                   </p>
 
-                  <a href="/register" className="btn btn-outline-primary btn-sm">
+                  <a href="/events/register" className="btn btn-outline-primary btn-sm">
                     Volunteer for Event
                   </a>
                 </div>

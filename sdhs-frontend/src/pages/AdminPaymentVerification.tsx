@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../services/api';
 
 function AdminPaymentVerification() {
@@ -92,13 +93,22 @@ function AdminPaymentVerification() {
   return (
     <div className="container py-5">
 
-      <h2 className="mb-4">
-        Payment Verification
-      </h2>
+      <div className="d-flex justify-content-between align-items-center gap-3 mb-4 flex-wrap">
+        <h2 className="mb-0">
+          Payment Verification
+        </h2>
+
+        <Link className="btn btn-outline-secondary" to="/admin/dashboard">
+          Back to Dashboard
+        </Link>
+      </div>
 
       {payments.length === 0 && (
-        <div className="alert alert-info">
-          No submitted payments pending verification.
+        <div className="alert alert-info d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+          <span>No submitted payments pending verification.</span>
+          <Link className="btn btn-outline-secondary" to="/admin/dashboard">
+            Back to Dashboard
+          </Link>
         </div>
       )}
 

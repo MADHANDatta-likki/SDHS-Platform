@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../services/api';
 
 function AdminParticipantApproval() {
@@ -151,12 +152,19 @@ function AdminParticipantApproval() {
             </h1>
           </div>
 
+          <Link className="btn btn-outline-secondary" to="/admin/dashboard">
+            Back to Dashboard
+          </Link>
+
         </div>
 
         {participants.length === 0 ? (
 
-          <div className="alert alert-info mt-4">
-            No participants pending review.
+          <div className="alert alert-info mt-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <span>No participants pending review.</span>
+            <Link className="btn btn-outline-secondary" to="/admin/dashboard">
+              Back to Dashboard
+            </Link>
           </div>
 
         ) : (

@@ -31,8 +31,8 @@ const dashboardActions: DashboardAction[] = [
     title: 'Create / Manage Events',
     description: 'Add new events, update dates, and control registration availability.',
     icon: 'bi-calendar-plus',
-    buttonLabel: 'Coming Soon',
-    disabled: true,
+    path: '/admin/events',
+    buttonLabel: 'Manage Events',
   },
   {
     title: 'Upload / Manage Images',

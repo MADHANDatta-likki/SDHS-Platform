@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +42,11 @@ public class RegistrationServiceImpl implements RegistrationService {
 
     @Override
     public void registerCamp(CampRegistrationRequest request) {
+
+        Event event = eventRepo.findById(request.getEventId())
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+
+        validateRegistrationAllowed(event);
 
         EventRegistration reg = new EventRegistration();
         reg.setEventId(request.getEventId());
@@ -133,6 +139,11 @@ public class RegistrationServiceImpl implements RegistrationService {
         EventRegistration registration = registrationRepo.findById(registrationId)
                 .orElseThrow(() -> new RuntimeException("Registration not found"));
 
+        Event event = eventRepo.findById(registration.getEventId())
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+
+        validateRegistrationAllowed(event);
+
         for (AddParticipantsRequest.ParticipantDTO p : request.getParticipants()) {
 
             participantRepo.findByEventIdAndVolunteerId(registration.getEventId(), p.getVolunteerId())
@@ -218,5 +229,33 @@ public class RegistrationServiceImpl implements RegistrationService {
                 participantDTOs,
                 paymentDTOs
         );
+    }
+
+    private void validateRegistrationAllowed(Event event) {
+        LocalDate today = LocalDate.now();
+
+        if (!Boolean.TRUE.equals(event.getActive())) {
+            throw new RuntimeException("Registration is not available for this event.");
+        }
+
+        if (!Boolean.TRUE.equals(event.getRegistrationOpen())) {
+            throw new RuntimeException("Registration is closed for this event.");
+        }
+
+        if (!"ACTIVE".equalsIgnoreCase(event.getEventStatus() == null ? "ACTIVE" : event.getEventStatus())) {
+            throw new RuntimeException("Registration is not available for this event.");
+        }
+
+        if (event.getEndDate() != null && event.getEndDate().isBefore(today)) {
+            throw new RuntimeException("Registration is closed for this event.");
+        }
+
+        if (event.getRegistrationStartDate() != null && today.isBefore(event.getRegistrationStartDate())) {
+            throw new RuntimeException("Registration has not opened for this event yet.");
+        }
+
+        if (event.getRegistrationEndDate() != null && today.isAfter(event.getRegistrationEndDate())) {
+            throw new RuntimeException("Registration is closed for this event.");
+        }
     }
 }

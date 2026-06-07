@@ -10,6 +10,9 @@ type EventItem = {
   startDate?: string;
   endDate?: string;
   feePerPerson?: number;
+  paymentRequired?: boolean;
+  amountPerVolunteer?: number;
+  eventImageUrl?: string;
 };
 
 function EventRegistration() {
@@ -249,7 +252,10 @@ function EventRegistration() {
                 <div className="col-md-6 col-lg-4" key={event.eventId}>
                   <div className="sdhs-register-event-card">
                     <div className="sdhs-register-event-image">
-                      <img src="/assets/img/activities/image1.jpg" alt={event.eventName} />
+                      <img
+                        src={event.eventImageUrl || '/assets/img/activities/image1.jpg'}
+                        alt={event.eventName}
+                      />
                     </div>
 
                     <div className="sdhs-register-event-body">
@@ -262,6 +268,12 @@ function EventRegistration() {
                       <p className="sdhs-register-event-location">
                         <i className="bi bi-geo-alt-fill me-2"></i>
                         {event.location || 'Location not available'}
+                      </p>
+
+                      <p className="text-muted mb-0">
+                        {event.paymentRequired === false
+                          ? 'No payment required'
+                          : `Amount: ₹ ${event.amountPerVolunteer ?? event.feePerPerson ?? 0}`}
                       </p>
 
                       {registeredEvents.includes(event.eventId) ? (

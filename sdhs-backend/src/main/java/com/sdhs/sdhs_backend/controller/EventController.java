@@ -4,6 +4,7 @@ import com.sdhs.sdhs_backend.entity.Event;
 import com.sdhs.sdhs_backend.repository.EventRepository;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -18,6 +19,6 @@ public class EventController {
 
     @GetMapping("/active")
     public List<Event> getActiveEvents() {
-        return eventRepository.findByActiveTrueAndRegistrationOpenTrue();
+        return eventRepository.findPublicActiveEvents(LocalDate.now());
     }
 }

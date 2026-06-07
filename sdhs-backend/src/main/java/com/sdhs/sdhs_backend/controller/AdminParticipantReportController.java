@@ -26,13 +26,17 @@ public class AdminParticipantReportController {
             String participantStatus,
 
             @RequestParam(required = false)
-            String centerCode
+            String centerCode,
+
+            @RequestParam(required = false)
+            String paymentStatus
     ) {
 
         return reportService.getParticipantReport(
                 eventId,
                 participantStatus,
-                centerCode
+                centerCode,
+                paymentStatus
         );
     }
 }

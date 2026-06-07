@@ -19,6 +19,11 @@ const adminNavItems = [
     icon: 'bi-images',
   },
   {
+    label: 'Events',
+    path: '/admin/events',
+    icon: 'bi-calendar-event',
+  },
+  {
     label: 'Registrations',
     path: '/admin/registration-approval',
     icon: 'bi-person-check',

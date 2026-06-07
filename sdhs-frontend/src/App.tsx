@@ -17,6 +17,7 @@ import AdminRegistrationApproval from './pages/AdminRegistrationApproval';
 import AdminParticipantApproval from './pages/AdminParticipantApproval';
 import AdminParticipantReport from './pages/AdminParticipantReport';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminEventManagement from './pages/AdminEventManagement';
 
 function App() {
   useEffect(() => {
@@ -40,6 +41,7 @@ function App() {
         <Route path="/admin/images" element={<AdminImageUpload />} />
         <Route path="/volunteer/payment/:registrationId" element={<VolunteerPaymentPage />}/>
         <Route path="/admin/dashboard" element={<AdminDashboard />}/>
+        <Route path="/admin/events" element={<AdminEventManagement />}/>
         <Route path="/admin/payment-verification" element={<AdminPaymentVerification />}/>
         <Route path="/admin/registration-approval" element={<AdminRegistrationApproval />}/>
         <Route path="/admin/participant-approval" element={<AdminParticipantApproval />}/>

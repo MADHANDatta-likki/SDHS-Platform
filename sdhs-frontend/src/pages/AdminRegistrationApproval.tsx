@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../services/api';
 
 function AdminRegistrationApproval() {
@@ -127,11 +128,18 @@ function AdminRegistrationApproval() {
             <p className="text-muted mb-1">Admin Portal</p>
             <h1 className="fw-bold">Registration Approval Queue</h1>
           </div>
+
+          <Link className="btn btn-outline-secondary" to="/admin/dashboard">
+            Back to Dashboard
+          </Link>
         </div>
 
         {hasNoPendingItems && (
-          <div className="alert alert-info mt-4">
-            No registrations or additional volunteers are pending review.
+          <div className="alert alert-info mt-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <span>No registrations or additional volunteers are pending review.</span>
+            <Link className="btn btn-outline-secondary" to="/admin/dashboard">
+              Back to Dashboard
+            </Link>
           </div>
         )}
 
@@ -210,7 +218,7 @@ function AdminRegistrationApproval() {
                           className="btn btn-success flex-grow-1"
                           onClick={() => approveRegistration(reg.registrationId)}
                         >
-                          Approve for Payment
+                          Approve Registration
                         </button>
 
                         <button

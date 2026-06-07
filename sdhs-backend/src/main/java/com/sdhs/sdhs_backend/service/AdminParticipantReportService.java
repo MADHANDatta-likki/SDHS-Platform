@@ -9,6 +9,7 @@ public interface AdminParticipantReportService {
     List<AdminParticipantReportDTO> getParticipantReport(
             Long eventId,
             String participantStatus,
-            String centerCode
+            String centerCode,
+            String paymentStatus
     );
 }
