@@ -10,4 +10,6 @@ public class LoginResponse {
     private String vid;
     private String displayName;
     private String phone;
+    private Boolean isAdmin;
+    private String adminRole;
 }

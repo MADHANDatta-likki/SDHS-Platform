@@ -3,6 +3,7 @@ package com.sdhs.sdhs_backend.controller;
 import com.sdhs.sdhs_backend.dto.LoginRequest;
 import com.sdhs.sdhs_backend.dto.LoginResponse;
 import com.sdhs.sdhs_backend.entity.Volunteer;
+import com.sdhs.sdhs_backend.repository.AdminUserRepository;
 import com.sdhs.sdhs_backend.repository.VolunteerRepository;
 
 import org.springframework.http.HttpStatus;
@@ -14,9 +15,14 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final VolunteerRepository volunteerRepository;
+    private final AdminUserRepository adminUserRepository;
 
-    public AuthController(VolunteerRepository volunteerRepository) {
+    public AuthController(
+            VolunteerRepository volunteerRepository,
+            AdminUserRepository adminUserRepository
+    ) {
         this.volunteerRepository = volunteerRepository;
+        this.adminUserRepository = adminUserRepository;
     }
 
     @PostMapping("/login")
@@ -36,10 +42,16 @@ public class AuthController {
     }
 
     private LoginResponse buildResponse(Volunteer v) {
+        var adminUser =
+                adminUserRepository.findByVolunteerIdAndActiveTrue(v.getVid())
+                        .orElse(null);
+
         return new LoginResponse(
                 v.getVid(),
                 v.getDisplayName(),
-                v.getPhone()
+                v.getPhone(),
+                adminUser != null,
+                adminUser != null ? adminUser.getAdminRole() : null
         );
     }
 }

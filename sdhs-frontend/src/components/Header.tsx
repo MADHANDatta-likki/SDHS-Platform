@@ -42,6 +42,9 @@ function Header() {
               <li className="nav-item"><a className="nav-link" href="#faq">FAQ</a></li>
               <li className="nav-item"><a className="nav-link" href="#contact">Contact</a></li>
               <li className="nav-item">
+                <a className="btn btn-outline-primary ms-lg-3 mt-2 mt-lg-0" href="/join-us">Join Us</a>
+              </li>
+              <li className="nav-item">
                 <a className="btn btn-primary ms-lg-3 mt-2 mt-lg-0" href="/login">Login</a>
               </li>
             </ul>

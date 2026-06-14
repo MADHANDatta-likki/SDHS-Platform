@@ -16,7 +16,9 @@ function Login() {
 
     localStorage.setItem('volunteer', JSON.stringify(response.data));
 
-    window.location.href = '/volunteer/dashboard';
+    window.location.href = response.data?.isAdmin
+      ? '/admin/landing'
+      : '/volunteer/dashboard';
   } catch (error: any) {
 
     console.error('Login error:', error);

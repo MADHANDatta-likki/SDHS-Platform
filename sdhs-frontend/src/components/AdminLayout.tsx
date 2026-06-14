@@ -29,6 +29,11 @@ const adminNavItems = [
     icon: 'bi-person-check',
   },
   {
+    label: 'Applicants',
+    path: '/admin/volunteer-applicants',
+    icon: 'bi-person-plus',
+  },
+  {
     label: 'Participants',
     path: '/admin/participant-approval',
     icon: 'bi-people',
@@ -46,6 +51,11 @@ const adminNavItems = [
 ];
 
 function AdminLayout({ title, subtitle, children }: AdminLayoutProps) {
+  const logout = () => {
+    localStorage.removeItem('volunteer');
+    window.location.href = '/login';
+  };
+
   return (
     <main className="sdhs-dashboard-page">
       <nav className="navbar navbar-expand-lg sdhs-admin-navbar">
@@ -87,6 +97,16 @@ function AdminLayout({ title, subtitle, children }: AdminLayoutProps) {
                   <i className="bi bi-house-door me-2"></i>
                   Website
                 </NavLink>
+              </li>
+
+              <li className="nav-item">
+                <button
+                  className="btn btn-outline-secondary ms-lg-2"
+                  onClick={logout}
+                >
+                  <i className="bi bi-box-arrow-right me-2"></i>
+                  Logout
+                </button>
               </li>
             </ul>
           </div>

@@ -130,7 +130,7 @@ function Hero() {
                       <p>{slide.text}</p>
 
                       <div className="d-flex gap-3 mt-4 flex-wrap">
-                        <a href="#join" className="btn btn-primary btn-lg">
+                        <a href="/join-us" className="btn btn-primary btn-lg">
                           Join as Volunteer
                         </a>
                         <a href="#services" className="btn btn-light btn-lg">

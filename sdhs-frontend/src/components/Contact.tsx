@@ -38,9 +38,7 @@ function Contact() {
 
         <div id="join" className="text-center mt-5">
           <a
-            href="https://forms.gle/X3PKMjXcrh4WjttEA"
-            target="_blank"
-            rel="noreferrer"
+            href="/join-us"
             className="btn btn-primary btn-lg"
           >
             Want to Join Us?

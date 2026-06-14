@@ -49,6 +49,13 @@ const dashboardActions: DashboardAction[] = [
     buttonLabel: 'Review Queue',
   },
   {
+    title: 'Volunteer Applicants',
+    description: 'Review Join Us applications before adding new volunteers.',
+    icon: 'bi-person-plus',
+    path: '/admin/volunteer-applicants',
+    buttonLabel: 'Review Applicants',
+  },
+  {
     title: 'Additional Volunteer Approval',
     description: 'Open the dedicated queue for volunteers added after registration.',
     icon: 'bi-people',
