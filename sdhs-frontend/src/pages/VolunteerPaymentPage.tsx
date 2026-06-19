@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { buildStoragePath, STORAGE_BUCKET } from '../services/storageConfig';
 import { supabase } from '../services/supabase';
 
 function VolunteerPaymentPage() {
@@ -46,10 +47,13 @@ function VolunteerPaymentPage() {
       .replace(/[^a-z0-9.]/g, '-')
       .replace(/-+/g, '-');
 
-    const filePath = `payments/registration-${registrationId}/${Date.now()}-${safeFileName}`;
+    const filePath = buildStoragePath(
+      `payments/registration-${registrationId}`,
+      `${Date.now()}-${safeFileName}`
+    );
 
     const { error } = await supabase.storage
-      .from('sdhs-public-assets')
+      .from(STORAGE_BUCKET)
       .upload(filePath, proofFile, {
         cacheControl: '3600',
         upsert: false,
@@ -61,7 +65,7 @@ function VolunteerPaymentPage() {
     }
 
     const { data } = supabase.storage
-      .from('sdhs-public-assets')
+      .from(STORAGE_BUCKET)
       .getPublicUrl(filePath);
 
     return data.publicUrl;

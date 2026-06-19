@@ -10,4 +10,14 @@ public interface ImagePlacementRepository extends JpaRepository<ImagePlacement, 
     List<ImagePlacement> findByPlacementKeyAndActiveTrueOrderByDisplayOrderAsc(
             String placementKey
     );
+
+    List<ImagePlacement> findByImageIdOrderByDisplayOrderAsc(Long imageId);
+
+    long countByImageId(Long imageId);
+
+    boolean existsByImageIdAndPlacementAreaAndPlacementKey(
+            Long imageId,
+            String placementArea,
+            String placementKey
+    );
 }

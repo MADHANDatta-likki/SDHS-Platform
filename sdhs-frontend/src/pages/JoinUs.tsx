@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import api from '../services/api';
+import { buildStoragePath, STORAGE_BUCKET } from '../services/storageConfig';
 import { supabase } from '../services/supabase';
 
 type JoinUsForm = {
@@ -64,10 +65,13 @@ function JoinUs() {
         .replace(/[^a-z0-9.]/g, '-')
         .replace(/-+/g, '-');
 
-      const filePath = `volunteer-applicants/${Date.now()}-${safeFileName}`;
+      const filePath = buildStoragePath(
+        'volunteer-applicants',
+        `${Date.now()}-${safeFileName}`
+      );
 
       const { error } = await supabase.storage
-        .from('sdhs-public-assets')
+        .from(STORAGE_BUCKET)
         .upload(filePath, file, {
           cacheControl: '3600',
           upsert: false,
@@ -79,7 +83,7 @@ function JoinUs() {
       }
 
       const { data } = supabase.storage
-        .from('sdhs-public-assets')
+        .from(STORAGE_BUCKET)
         .getPublicUrl(filePath);
 
       updateForm('photoUrl', data.publicUrl);

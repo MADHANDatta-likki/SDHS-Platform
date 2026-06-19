@@ -3,6 +3,7 @@ import type { ChangeEvent, FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import AdminLayout from '../components/AdminLayout';
 import api from '../services/api';
+import { buildStoragePath, STORAGE_BUCKET } from '../services/storageConfig';
 import { supabase } from '../services/supabase';
 
 type EventStatus = 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
@@ -245,10 +246,13 @@ function AdminEventManagement() {
         .replace(/[^a-z0-9.]/g, '-')
         .replace(/-+/g, '-');
 
-      const filePath = `events/${Date.now()}-${safeFileName}`;
+      const filePath = buildStoragePath(
+        'events',
+        `${Date.now()}-${safeFileName}`
+      );
 
       const { error: uploadError } = await supabase.storage
-        .from('sdhs-public-assets')
+        .from(STORAGE_BUCKET)
         .upload(filePath, file, {
           cacheControl: '3600',
           upsert: false,
@@ -260,7 +264,7 @@ function AdminEventManagement() {
       }
 
       const { data } = supabase.storage
-        .from('sdhs-public-assets')
+        .from(STORAGE_BUCKET)
         .getPublicUrl(filePath);
 
       updateForm('eventImageUrl', data.publicUrl);
